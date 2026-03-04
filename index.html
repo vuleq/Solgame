@@ -937,20 +937,15 @@ function generateFloor(floorNum) {
   game.player.x = startRoom.x + 1;
   game.player.y = startRoom.y + 1;
 
-  // Place stairs in last room
-  const lastRoom = rooms[rooms.length - 1];
-  const sx = lastRoom.x + Math.floor(lastRoom.w/2);
-  const sy = lastRoom.y + Math.floor(lastRoom.h/2);
-  game.map[sy][sx] = TILE_STAIRS;
-
   // Boss floors: 3, 5, 7, 10
   const BOSS_FLOORS = [3, 5, 7, 10];
   const isBossFloor = BOSS_FLOORS.includes(floorNum);
 
-  // Place enemies (more on higher floors)
+  // Place regular enemies (more on higher floors)
   const enemyCount = Math.min(3 + floorNum * 2, 18);
   for (let i = 0; i < enemyCount; i++) {
-    const room = rooms[rng(1, rooms.length - 1)];
+    // Safe room pick: skip room 0 (player start) when possible
+    const room = rooms.length > 1 ? rooms[rng(1, rooms.length - 1)] : rooms[0];
     const ex = room.x + rng(0, room.w - 1);
     const ey = room.y + rng(0, room.h - 1);
     if (game.map[ey][ex] === TILE_FLOOR && !getEnemyAt(ex, ey) &&
@@ -959,9 +954,10 @@ function generateFloor(floorNum) {
     }
   }
 
-  // Boss on last floor
+  // Place boss — choose a room that is NOT the last room so it can't collide with stairs
   if (isBossFloor) {
-    const bossRoom = rooms[Math.floor(rooms.length / 2)];
+    const bossRoomIdx = rooms.length > 1 ? Math.floor((rooms.length - 1) / 2) : 0;
+    const bossRoom = rooms[bossRoomIdx];
     const bx = bossRoom.x + Math.floor(bossRoom.w/2);
     const by = bossRoom.y + Math.floor(bossRoom.h/2);
     game.map[by][bx] = TILE_FLOOR;
@@ -971,7 +967,7 @@ function generateFloor(floorNum) {
   // Place chests
   const chestCount = 2 + Math.floor(floorNum / 2);
   for (let i = 0; i < chestCount; i++) {
-    const room = rooms[rng(1, rooms.length - 1)];
+    const room = rooms.length > 1 ? rooms[rng(1, rooms.length - 1)] : rooms[0];
     const cx2 = room.x + rng(0, room.w - 1);
     const cy2 = room.y + rng(0, room.h - 1);
     if (game.map[cy2][cx2] === TILE_FLOOR && !getEnemyAt(cx2, cy2)) {
@@ -984,6 +980,12 @@ function generateFloor(floorNum) {
     const shopRoom = rooms[rng(1, rooms.length - 2)];
     game.map[shopRoom.y + 1][shopRoom.x + 1] = TILE_SHOP;
   }
+
+  // Place stairs LAST so nothing can overwrite them
+  const lastRoom = rooms[rooms.length - 1];
+  const sx = lastRoom.x + Math.floor(lastRoom.w/2);
+  const sy = lastRoom.y + Math.floor(lastRoom.h/2);
+  game.map[sy][sx] = TILE_STAIRS;
 
   updateFog();
   updateSidePanel();
