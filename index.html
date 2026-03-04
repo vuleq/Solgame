@@ -331,14 +331,13 @@
   /* ---- CHARACTER SELECT ---- */
   #char-select { display: none; }
   .class-cards {
-    display: flex;
-    justify-content: center;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin: 20px 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 16px auto;
+    max-width: 760px;
   }
   .class-card {
-    width: 200px;
     background: linear-gradient(160deg, #1a1008, #0e0804);
     border: 2px solid #5a3a10;
     padding: 18px 14px;
@@ -439,6 +438,75 @@
     color: #555;
     padding: 4px;
   }
+
+  /* ---- TOUCH D-PAD ---- */
+  #dpad-area {
+    display: none;
+    background: #080604;
+    border: 2px solid #5a3a10;
+    border-top: none;
+    padding: 10px 0 8px;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  #dpad {
+    display: grid;
+    grid-template-columns: repeat(3, 54px);
+    grid-template-rows: repeat(3, 54px);
+    gap: 4px;
+  }
+  .dp {
+    width: 54px; height: 54px;
+    background: linear-gradient(145deg, #2a1a0a, #4a3010);
+    border: 2px solid #6a4a20;
+    border-radius: 8px;
+    color: #ffd700;
+    font-size: 1.5em;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.1s, box-shadow 0.1s;
+  }
+  .dp:active {
+    background: linear-gradient(145deg, #5a3010, #8a6030);
+    box-shadow: 0 0 12px #ffd700;
+  }
+  .dp-blank { background: transparent; border-color: transparent; pointer-events: none; }
+  #dpad-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-right: 12px;
+  }
+  .dp-act {
+    padding: 10px 16px;
+    background: linear-gradient(135deg, #1a0e04, #3a2010);
+    border: 2px solid #5a3a10;
+    border-radius: 6px;
+    color: #ffd700;
+    font-size: 0.9em;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    letter-spacing: 1px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .dp-act:active { background: linear-gradient(135deg, #3a2010, #6a4020); box-shadow: 0 0 10px #ffd700; }
+
+  /* Responsive for smaller iPads / phones */
+  @media (max-width: 640px) {
+    #game-container { width: 100vw; }
+    #dungeon-canvas { width: 100% !important; height: auto !important; }
+    #dungeon-area   { flex-direction: column; }
+    #side-panel     { width: 100%; max-height: 120px; flex-direction: row; flex-wrap: wrap; }
+    .class-cards    { grid-template-columns: repeat(2, 1fr); }
+  }
 </style>
 </head>
 <body>
@@ -507,6 +575,45 @@
             <div class="class-skill-line">☠ Poison Blade — Poison enemy 3 turns (CD 3)</div>
           </div>
         </div>
+        <!-- Paladin -->
+        <div class="class-card" onclick="selectClass('paladin')">
+          <div class="class-emoji">🛡</div>
+          <div class="class-name">PALADIN</div>
+          <div class="class-flavor">Holy warrior whose faith heals wounds and smites darkness.</div>
+          <div class="class-stats">
+            ❤ HP: 42 &nbsp; ⚔ ATK: 9 &nbsp; 🛡 DEF: 9
+          </div>
+          <div class="class-skills">
+            <div class="class-skill-line">💫 Holy Strike — 1.8× dmg, ignores 40% DEF (CD 3)</div>
+            <div class="class-skill-line">✨ Divine Heal — Restore 25% Max HP (CD 4)</div>
+          </div>
+        </div>
+        <!-- Archer -->
+        <div class="class-card" onclick="selectClass('archer')">
+          <div class="class-emoji">🏹</div>
+          <div class="class-name">ARCHER</div>
+          <div class="class-flavor">Precise marksman who strikes from afar with deadly accuracy.</div>
+          <div class="class-stats">
+            ❤ HP: 30 &nbsp; ⚔ ATK: 12 &nbsp; 🛡 DEF: 3
+          </div>
+          <div class="class-skills">
+            <div class="class-skill-line">🏹 Arrow Rain — 3 rapid shots, 0.9× each (CD 3)</div>
+            <div class="class-skill-line">👁 Eagle Eye — ATK ×3 for 2 turns (CD 5)</div>
+          </div>
+        </div>
+        <!-- Necromancer -->
+        <div class="class-card" onclick="selectClass('necromancer')">
+          <div class="class-emoji">💀</div>
+          <div class="class-name">NECROMANCER</div>
+          <div class="class-flavor">Dark sorcerer who bends life and death to their sinister will.</div>
+          <div class="class-stats">
+            ❤ HP: 20 &nbsp; ⚔ ATK: 17 &nbsp; 🛡 DEF: 1
+          </div>
+          <div class="class-skills">
+            <div class="class-skill-line">💀 Death Bolt — 2.2× magic, reduce enemy DEF (CD 2)</div>
+            <div class="class-skill-line">🩸 Soul Drain — Steal 50% dmg as HP (CD 3)</div>
+          </div>
+        </div>
       </div>
       <div style="color:#555; font-size:0.78em;">Click a class to begin your adventure</div>
       <br>
@@ -553,6 +660,7 @@
         <div style="margin-top:8px" class="panel-title">🎒 EQUIPPED</div>
         <div class="stat-row"><span class="stat-name">Weapon</span><span class="stat-val" id="sp-weapon">Fists</span></div>
         <div class="stat-row"><span class="stat-name">Armor</span><span class="stat-val" id="sp-armor">Rags</span></div>
+        <div class="stat-row"><span class="stat-name">Accsr</span><span class="stat-val" id="sp-accsr" style="color:#cc88ff">None</span></div>
         <div style="margin-top:8px" class="panel-title">🗺 DUNGEON</div>
         <div class="stat-row"><span class="stat-name">Floor</span><span class="stat-val warn" id="sp-floor">1</span></div>
         <div class="stat-row"><span class="stat-name">Enemies</span><span class="stat-val" id="sp-enemies">--</span></div>
@@ -565,6 +673,26 @@
       </div>
     </div>
     <div id="floor-indicator" id="floor-display">FLOOR 1 — THE ENTRANCE</div>
+
+    <!-- TOUCH D-PAD (shown on touch devices) -->
+    <div id="dpad-area">
+      <div id="dpad">
+        <div class="dp dp-blank"></div>
+        <div class="dp" id="dp-up"    ontouchstart="dpMove(0,-1,event)" onclick="dpMove(0,-1,event)">▲</div>
+        <div class="dp dp-blank"></div>
+        <div class="dp" id="dp-left"  ontouchstart="dpMove(-1,0,event)" onclick="dpMove(-1,0,event)">◀</div>
+        <div class="dp dp-blank" style="background:#1a0e04; border-color:#3a2008; border-radius:50%;"></div>
+        <div class="dp" id="dp-right" ontouchstart="dpMove(1,0,event)"  onclick="dpMove(1,0,event)">▶</div>
+        <div class="dp dp-blank"></div>
+        <div class="dp" id="dp-down"  ontouchstart="dpMove(0,1,event)"  onclick="dpMove(0,1,event)">▼</div>
+        <div class="dp dp-blank"></div>
+      </div>
+      <div id="dpad-actions">
+        <button class="dp-act" ontouchstart="dpInteract(event)" onclick="dpInteract(event)">⚡ Interact (E)</button>
+        <button class="dp-act" ontouchstart="dpInventory(event)" onclick="dpInventory(event)">📦 Inventory (I)</button>
+      </div>
+    </div>
+
     <div id="log-area"></div>
     <div id="controls-hint">Move to fight enemies automatically • Stand on 🚪 to advance when floor is clear</div>
   </div>
@@ -679,13 +807,37 @@ const CLASSES = {
       { id:'poison',      name:'Poison Blade',   emoji:'☠',  desc:'Poison 5 dmg/turn × 3 turns',  cdMax:3 },
     ]
   },
+  paladin: {
+    name: 'Paladin', emoji: '🛡', sprite: '🛡',
+    hp: 42, atk: 9, def: 9, potions: 3, gold: 12,
+    skills: [
+      { id:'holy_strike', name:'Holy Strike', emoji:'💫', desc:'1.8× dmg, ignores 40% DEF',  cdMax:3 },
+      { id:'divine_heal', name:'Divine Heal', emoji:'✨', desc:'Restore 25% Max HP',         cdMax:4 },
+    ]
+  },
+  archer: {
+    name: 'Archer', emoji: '🏹', sprite: '🏹',
+    hp: 30, atk: 12, def: 3, potions: 2, gold: 18,
+    skills: [
+      { id:'arrow_rain',  name:'Arrow Rain', emoji:'🏹', desc:'3 shots, 0.9× ATK each',     cdMax:3 },
+      { id:'eagle_eye',   name:'Eagle Eye',  emoji:'👁',  desc:'ATK ×3 for 2 turns',         cdMax:5 },
+    ]
+  },
+  necromancer: {
+    name: 'Necromancer', emoji: '💀', sprite: '💀',
+    hp: 20, atk: 17, def: 1, potions: 2, gold: 22,
+    skills: [
+      { id:'death_bolt',  name:'Death Bolt', emoji:'💀', desc:'2.2× magic, reduce enemy DEF',cdMax:2 },
+      { id:'soul_drain',  name:'Soul Drain', emoji:'🩸', desc:'Steal 50% dmg as HP',         cdMax:3 },
+    ]
+  },
 };
 
 function initGame(classId) {
   const cls = CLASSES[classId] || CLASSES.warrior;
   game = {
     floor: 1,
-    maxFloors: 6,
+    maxFloors: 10,
     state: 'dungeon',
     turn: 0,
     classId: classId,
@@ -705,6 +857,14 @@ function initGame(classId) {
       // Status effects
       atkBuffMult: 1, atkBuffTurns: 0,
       shielded: false,
+      // Accessory
+      accessory: null,
+      goldMult: 1, xpMult: 1, fleeBonus: false, lifeDrain: 0,
+      accAtkBonus: 0, accDefBonus: 0,
+      // Player combat poison (from enemies)
+      playerPoisonTurns: 0, playerPoisonDmg: 0,
+      // Class base stats for re-equip formula
+      classBaseAtk: cls.atk, classBaseDef: cls.def,
     },
     map: [],
     enemies: [],
@@ -718,7 +878,7 @@ function initGame(classId) {
   generateFloor(1);
   updateHUD();
   render();
-  addLog(`Welcome, ${cls.name}! Descend the dungeon and slay the Ancient Dragon!`, 'info');
+  addLog(`Welcome, ${cls.name}! 10 floors of darkness await — slay the Ancient Dragon!`, 'info');
   addLog('Move with Arrow Keys. Walk into enemies to fight.', 'system');
   addLog(`Your skills: ${cls.skills.map(s => s.emoji + ' ' + s.name).join(' | ')}`, 'info');
 }
@@ -783,11 +943,12 @@ function generateFloor(floorNum) {
   const sy = lastRoom.y + Math.floor(lastRoom.h/2);
   game.map[sy][sx] = TILE_STAIRS;
 
-  // Place boss on floor 6 (last floor)
-  const isBossFloor = floorNum >= game.maxFloors;
+  // Boss floors: 3, 5, 7, 10
+  const BOSS_FLOORS = [3, 5, 7, 10];
+  const isBossFloor = BOSS_FLOORS.includes(floorNum);
 
-  // Place enemies
-  const enemyCount = Math.min(3 + floorNum * 2, 14);
+  // Place enemies (more on higher floors)
+  const enemyCount = Math.min(3 + floorNum * 2, 18);
   for (let i = 0; i < enemyCount; i++) {
     const room = rooms[rng(1, rooms.length - 1)];
     const ex = room.x + rng(0, room.w - 1);
@@ -837,30 +998,49 @@ function rectsOverlap(a, b, padding) {
 //  ENEMIES
 // ============================================================
 const ENEMY_TYPES = [
-  { name:'Goblin',     emoji:'👺', hp:12, atk:4,  def:1, xp:8,  gold:[2,6],  desc:'A sneaky little pest.' },
-  { name:'Skeleton',   emoji:'💀', hp:16, atk:6,  def:2, xp:12, gold:[3,8],  desc:'Rattling bones.' },
-  { name:'Orc',        emoji:'👹', hp:24, atk:9,  def:4, xp:20, gold:[5,12], desc:'Big and mean.' },
-  { name:'Troll',      emoji:'🧌', hp:36, atk:11, def:6, xp:30, gold:[8,18], desc:'Regenerates health.' },
-  { name:'Vampire',    emoji:'🧛', hp:28, atk:13, def:5, xp:35, gold:[10,20],desc:'Drains your life.' },
-  { name:'Witch',      emoji:'🧙‍♀️',hp:22, atk:15, def:3, xp:40, gold:[12,25],desc:'Casts deadly spells.' },
-  { name:'Dragon',     emoji:'🐲', hp:80, atk:18, def:10,xp:100,gold:[30,60],desc:'A fearsome dragon.',boss:true },
-  { name:'Lich King',  emoji:'☠️', hp:60, atk:20, def:8, xp:80, gold:[25,50],desc:'Master of undeath.', boss:true },
-  { name:'Ancient Dragon',emoji:'🐉',hp:120,atk:25,def:15,xp:250,gold:[80,150],desc:'The final boss!',boss:true,final:true },
+  // ── Regular enemies (floors 1–9) ──
+  { name:'Rat Swarm',   emoji:'🐀', hp:8,  atk:3,  def:0,  xp:4,  gold:[1,4],   desc:'Filthy and numerous.' },
+  { name:'Goblin',      emoji:'👺', hp:12, atk:4,  def:1,  xp:8,  gold:[2,6],   desc:'A sneaky little pest.' },
+  { name:'Slime',       emoji:'🫧', hp:15, atk:5,  def:3,  xp:10, gold:[2,5],   desc:'Gelatinous and resilient.' },
+  { name:'Skeleton',    emoji:'💀', hp:18, atk:6,  def:2,  xp:13, gold:[3,8],   desc:'Rattling bones of the fallen.' },
+  { name:'Zombie',      emoji:'🧟', hp:26, atk:7,  def:3,  xp:16, gold:[4,9],   desc:'Shambling undead corpse.' },
+  { name:'Dark Spider', emoji:'🕷', hp:20, atk:8,  def:2,  xp:18, gold:[3,8],   desc:'Venomous hunter.',          special:'poison_player' },
+  { name:'Orc',         emoji:'👹', hp:28, atk:9,  def:4,  xp:22, gold:[5,12],  desc:'Big, mean, and dangerous.' },
+  { name:'Troll',       emoji:'🧌', hp:40, atk:11, def:6,  xp:32, gold:[8,18],  desc:'Regenerates health.',        special:'regen' },
+  { name:'Vampire',     emoji:'🧛', hp:30, atk:13, def:5,  xp:38, gold:[10,20], desc:'Drains your life.',           special:'drain' },
+  { name:'Witch',       emoji:'🧙‍♀️',hp:24, atk:15, def:3,  xp:42, gold:[12,25], desc:'Casts deadly curses.' },
+  { name:'Stone Golem', emoji:'🗿', hp:50, atk:12, def:14, xp:50, gold:[10,22], desc:'Slow but nearly impenetrable.' },
+  { name:'Demon',       emoji:'😈', hp:36, atk:16, def:6,  xp:55, gold:[14,26], desc:'Servant of the Abyss.' },
+  { name:'Banshee',     emoji:'👻', hp:28, atk:13, def:4,  xp:45, gold:[10,20], desc:'Her wail steals your essence.', special:'xp_drain' },
+  { name:'Dark Knight', emoji:'🖤', hp:45, atk:15, def:9,  xp:60, gold:[16,28], desc:'Reflects damage back at you.', special:'reflect' },
+  { name:'Wraith',      emoji:'🌫', hp:32, atk:18, def:5,  xp:65, gold:[15,30], desc:'Phases through your defenses.', special:'phase' },
+  // ── Bosses ──
+  { name:'Spider Queen',  emoji:'🕸',  hp:70,  atk:16, def:8,  xp:90,  gold:[22,45],  desc:'Queen of the Web.',          boss:true, special:'poison_player' },
+  { name:'Lich King',     emoji:'☠️',  hp:85,  atk:20, def:9,  xp:110, gold:[30,55],  desc:'Master of undeath.',          boss:true },
+  { name:'Fire Golem',    emoji:'🔥',  hp:100, atk:22, def:14, xp:130, gold:[35,65],  desc:'A living inferno.',           boss:true },
+  { name:'Shadow Demon',  emoji:'👿',  hp:90,  atk:25, def:11, xp:150, gold:[40,75],  desc:'Lord of the Shadow Realm.',   boss:true },
+  { name:'Dragon',        emoji:'🐲',  hp:110, atk:22, def:12, xp:180, gold:[50,90],  desc:'A fearsome ancient dragon.',  boss:true },
+  { name:'Ancient Dragon',emoji:'🐉',  hp:150, atk:30, def:18, xp:300, gold:[100,180],desc:'The final destroyer!',        boss:true, final:true },
 ];
 
 function createEnemy(x, y, floor, isBoss) {
   let typePool;
-  if (isBoss && floor >= game.maxFloors) {
-    typePool = ENEMY_TYPES.filter(e => e.final);
-  } else if (isBoss) {
-    typePool = ENEMY_TYPES.filter(e => e.boss && !e.final);
+  const regulars = ENEMY_TYPES.filter(e => !e.boss);
+  if (isBoss) {
+    if (floor >= game.maxFloors)  typePool = ENEMY_TYPES.filter(e => e.final);
+    else if (floor === 9) typePool = ENEMY_TYPES.filter(e => e.name === 'Dragon');
+    else if (floor === 7) typePool = ENEMY_TYPES.filter(e => e.name === 'Shadow Demon');
+    else if (floor === 5) typePool = ENEMY_TYPES.filter(e => e.name === 'Fire Golem' || e.name === 'Lich King');
+    else if (floor === 3) typePool = ENEMY_TYPES.filter(e => e.name === 'Spider Queen');
+    else typePool = ENEMY_TYPES.filter(e => e.boss && !e.final);
+    if (!typePool.length) typePool = ENEMY_TYPES.filter(e => e.boss && !e.final);
   } else {
-    // Scale enemy pool by floor
-    const maxIdx = Math.min(3 + Math.floor(floor * 0.8), ENEMY_TYPES.filter(e=>!e.boss).length - 1);
-    typePool = ENEMY_TYPES.filter(e=>!e.boss).slice(0, maxIdx + 1);
+    // Unlock more enemy types as floors increase
+    const maxIdx = Math.min(2 + Math.floor(floor * 1.2), regulars.length - 1);
+    typePool = regulars.slice(0, maxIdx + 1);
   }
   const type = typePool[rng(0, typePool.length - 1)];
-  const scale = 1 + (floor - 1) * 0.15;
+  const scale = 1 + (floor - 1) * 0.14;
   return {
     x, y,
     name: type.name,
@@ -873,7 +1053,7 @@ function createEnemy(x, y, floor, isBoss) {
     goldRange: type.gold,
     boss: !!type.boss,
     final: !!type.final,
-    special: type.name === 'Troll' ? 'regen' : type.name === 'Vampire' ? 'drain' : null,
+    special: type.special || null,
     alive: true,
     id: Math.random(),
   };
@@ -1132,6 +1312,9 @@ function advanceFloor() {
   const healAmt = Math.round(game.player.maxHp * 0.25);
   game.player.hp = Math.min(game.player.maxHp, game.player.hp + healAmt);
   addLog(`You rest briefly and recover ${healAmt} HP.`, 'heal');
+  if ([3,5,7,10].includes(nextFloor)) {
+    addLog(`⚠ A powerful BOSS lurks on Floor ${nextFloor}! Prepare yourself!`, 'boss');
+  }
   generateFloor(nextFloor);
   updateHUD();
   render();
@@ -1140,12 +1323,16 @@ function advanceFloor() {
 }
 
 const FLOOR_NAMES = {
-  1: 'THE ENTRANCE',
-  2: 'THE CATACOMBS',
-  3: 'THE DARK HALLS',
-  4: 'THE ABYSS',
-  5: 'THE DRAGON\'S LAIR',
-  6: 'THE FINAL CHAMBER',
+  1:  'THE ENTRANCE',
+  2:  'THE CATACOMBS',
+  3:  'THE SPIDER\'S WEB',
+  4:  'THE DARK HALLS',
+  5:  'THE FIRE PITS',
+  6:  'THE ABYSS',
+  7:  'THE SHADOW REALM',
+  8:  'THE BONE FORTRESS',
+  9:  'THE DRAGON\'S LAIR',
+  10: 'THE FINAL CHAMBER',
 };
 
 // ============================================================
@@ -1159,6 +1346,10 @@ function startCombat(enemy) {
   enemy.atkDebuffTurns = 0;
   enemy.poisonTurns = 0;
   enemy.poisonDmg = 0;
+  // Reset player combat state
+  game.player.playerPoisonTurns = 0;
+  game.player.playerPoisonDmg   = 0;
+  game.lastPlayerDmg = 0;
   showScreen('combat');
 
   const cls = CLASSES[game.classId] || CLASSES.warrior;
@@ -1201,10 +1392,11 @@ function updateCombatUI() {
 
   // Status bar
   let statusParts = [];
-  if (p.atkBuffTurns > 0)   statusParts.push(`<span class="buff-tag">⚔ ATK×${p.atkBuffMult} (${p.atkBuffTurns}t)</span>`);
-  if (p.shielded)           statusParts.push(`<span class="buff-tag">🌀 Shielded</span>`);
-  if (e.atkDebuffTurns > 0) statusParts.push(`<span class="debuff-tag">${e.name} ⬇ATK (${e.atkDebuffTurns}t)</span>`);
-  if (e.poisonTurns > 0)    statusParts.push(`<span class="debuff-tag">${e.name} ☠ Poisoned (${e.poisonTurns}t)</span>`);
+  if (p.atkBuffTurns > 0)      statusParts.push(`<span class="buff-tag">⚔ ATK×${p.atkBuffMult} (${p.atkBuffTurns}t)</span>`);
+  if (p.shielded)              statusParts.push(`<span class="buff-tag">🌀 Shielded</span>`);
+  if (p.playerPoisonTurns > 0) statusParts.push(`<span class="debuff-tag">🕷 You Poisoned (${p.playerPoisonTurns}t)</span>`);
+  if (e.atkDebuffTurns > 0)    statusParts.push(`<span class="debuff-tag">${e.name} ⬇ATK (${e.atkDebuffTurns}t)</span>`);
+  if (e.poisonTurns > 0)       statusParts.push(`<span class="debuff-tag">${e.name} ☠ (${e.poisonTurns}t)</span>`);
   const sb = document.getElementById('status-bar');
   if (sb) sb.innerHTML = statusParts.join('');
 }
@@ -1251,15 +1443,27 @@ function combatAction(action) {
   if (action === 'attack') {
     playerDmg = Math.max(1, effAtk - e.def + rng(-2, 4));
     e.hp -= playerDmg;
+    game.lastPlayerDmg = playerDmg;
     combatLog(`You strike ${e.name} for ${playerDmg} damage!`, 'damage');
+    if (p.lifeDrain > 0) {
+      const drained = Math.max(1, Math.round(playerDmg * p.lifeDrain));
+      p.hp = Math.min(p.maxHp, p.hp + drained);
+      combatLog(`🩸 Life Drain: absorbed ${drained} HP!`, 'heal');
+    }
     shakeEnemy();
   } else if (action === 'heavy') {
-    if (Math.random() < 0.3) {
+    if (Math.random() < 0.28) {
       combatLog(`Heavy Strike MISSED!`, 'system');
     } else {
-      playerDmg = Math.max(1, Math.round(effAtk * 1.8) - e.def + rng(-1, 3));
+      playerDmg = Math.max(1, Math.round(effAtk * 1.9) - e.def + rng(-1, 4));
       e.hp -= playerDmg;
-      combatLog(`💥 Heavy Strike hits ${e.name} for ${playerDmg} damage!`, 'damage');
+      game.lastPlayerDmg = playerDmg;
+      combatLog(`💥 Heavy Strike! ${e.name} takes ${playerDmg} damage!`, 'damage');
+      if (p.lifeDrain > 0) {
+        const drained = Math.max(1, Math.round(playerDmg * p.lifeDrain));
+        p.hp = Math.min(p.maxHp, p.hp + drained);
+        combatLog(`🩸 Life Drain: absorbed ${drained} HP!`, 'heal');
+      }
       shakeEnemy();
     }
   } else if (action === 'skill1' || action === 'skill2') {
@@ -1274,7 +1478,8 @@ function combatAction(action) {
     executeSkill(skill.id, p, e);
     p[cdKey] = skill.cdMax;
     if (checkCombatEnd()) return;
-    if (tickTurnEffects()) { checkCombatEnd(); return; }
+    const tick2 = tickTurnEffects();
+    if (tick2 === 'dead' || tick2 === true) { checkCombatEnd(); return; }
     enemyAttack();
     if (checkCombatEnd()) return;
     updateCombatUI();
@@ -1299,7 +1504,8 @@ function combatAction(action) {
       combatLog(`You can't flee from a boss!`, 'system');
       return;
     }
-    if (Math.random() < 0.5) {
+    const fleeChance = p.fleeBonus ? 0.80 : 0.50;
+    if (Math.random() < fleeChance) {
       combatLog(`You fled successfully!`, 'system');
       addLog(`You fled from the ${e.name}.`, 'system');
       game.state = 'dungeon';
@@ -1315,7 +1521,8 @@ function combatAction(action) {
 
   if (checkCombatEnd()) return;
 
-  if (tickTurnEffects()) { checkCombatEnd(); return; }
+  const tick = tickTurnEffects();
+  if (tick === 'dead' || tick === true) { checkCombatEnd(); return; }
   // Enemy turn
   enemyAttack();
   if (checkCombatEnd()) return;
@@ -1340,19 +1547,40 @@ function enemyAttack() {
 
   // Special abilities
   if (e.special === 'regen') {
-    const regen = rng(2, 5);
+    const regen = rng(2, 6);
     e.hp = Math.min(e.maxHp, e.hp + regen);
     combatLog(`🌿 ${e.name} regenerates ${regen} HP!`, 'heal');
   } else if (e.special === 'drain') {
-    const drain = Math.round(dmg * 0.3);
+    const drain = Math.round(dmg * 0.35);
     e.hp = Math.min(e.maxHp, e.hp + drain);
-    combatLog(`🩸 ${e.name} drains ${drain} HP!`, 'damage');
+    combatLog(`🩸 ${e.name} drains ${drain} HP from you!`, 'damage');
+  } else if (e.special === 'poison_player' && Math.random() < 0.45) {
+    p.playerPoisonTurns = 3;
+    p.playerPoisonDmg   = Math.max(3, Math.round(e.atk * 0.22));
+    combatLog(`🕷 ${e.name} injects venom! You are POISONED (${p.playerPoisonDmg} dmg × 3 turns)!`, 'boss');
+  } else if (e.special === 'xp_drain') {
+    const lost = Math.min(p.xp, rng(8, 20));
+    p.xp -= lost;
+    combatLog(`👻 ${e.name}'s wail siphons ${lost} XP from your soul!`, 'damage');
+  } else if (e.special === 'reflect') {
+    const reflected = Math.round((game.lastPlayerDmg || 0) * 0.28);
+    if (reflected > 0) {
+      p.hp -= reflected;
+      combatLog(`🔮 ${e.name} reflects ${reflected} damage back at you!`, 'damage');
+    }
+  } else if (e.special === 'phase') {
+    // Ignores player DEF on this hit
+    dmg = Math.max(1, effEnemyAtk + rng(-2, 3));
+    combatLog(`🌫 ${e.name} phases through your armor for ${dmg} damage!`, 'boss');
+    p.hp -= dmg;
+    shakePlayer();
+    return;
   }
 
   // Boss uses special attack occasionally
   if (e.boss && Math.random() < 0.3) {
-    dmg = Math.round(dmg * 1.5);
-    combatLog(`🔥 ${e.name} uses a DEVASTATING attack for ${dmg} damage!`, 'boss');
+    dmg = Math.round(dmg * 1.6);
+    combatLog(`💥 ${e.name} unleashes a DEVASTATING attack for ${dmg} damage!`, 'boss');
   } else {
     combatLog(`${e.name} attacks you for ${dmg} damage!`, 'damage');
   }
@@ -1404,6 +1632,52 @@ function executeSkill(skillId, p, e) {
       combatLog(`☠ Poison Blade! ${e.name} is poisoned! (${e.poisonDmg} dmg/turn × 3 turns)`, 'damage');
       break;
     }
+    case 'holy_strike': {
+      const dmg = Math.max(1, Math.round(effAtk * 1.8) - Math.floor(e.def * 0.6) + rng(-1, 3));
+      e.hp -= dmg;
+      combatLog(`💫 Holy Strike! Divine light smites ${e.name} for ${dmg} damage!`, 'boss');
+      shakeEnemy();
+      break;
+    }
+    case 'divine_heal': {
+      const healAmt = Math.round(p.maxHp * 0.25);
+      p.hp = Math.min(p.maxHp, p.hp + healAmt);
+      combatLog(`✨ Divine Heal! Holy power restores ${healAmt} HP!`, 'heal');
+      break;
+    }
+    case 'arrow_rain': {
+      let total = 0;
+      for (let i = 0; i < 3; i++) {
+        if (e.hp <= 0) break;
+        const d = Math.max(1, Math.round(effAtk * 0.9) - e.def + rng(-1, 3));
+        e.hp -= d; total += d;
+      }
+      combatLog(`🏹 Arrow Rain! 3 rapid shots deal ${total} total damage!`, 'damage');
+      shakeEnemy();
+      break;
+    }
+    case 'eagle_eye': {
+      p.atkBuffMult = 3; p.atkBuffTurns = 2;
+      combatLog(`👁 Eagle Eye! Your aim sharpens — ATK ×3 for 2 turns!`, 'info');
+      break;
+    }
+    case 'death_bolt': {
+      const dmg = Math.max(1, Math.round(effAtk * 2.2) - Math.floor(e.def * 0.3) + rng(-2, 4));
+      e.hp -= dmg;
+      e.def = Math.max(0, e.def - 4);
+      combatLog(`💀 Death Bolt! Dark magic blasts ${e.name} for ${dmg} dmg! Their DEF reduced by 4!`, 'boss');
+      shakeEnemy();
+      break;
+    }
+    case 'soul_drain': {
+      const dmg = Math.max(1, Math.round(effAtk * 1.5) - e.def + rng(-1, 3));
+      const stolen = Math.round(dmg * 0.5);
+      e.hp -= dmg;
+      p.hp = Math.min(p.maxHp, p.hp + stolen);
+      combatLog(`🩸 Soul Drain! Dealt ${dmg} damage and stole ${stolen} HP from ${e.name}!`, 'damage');
+      shakeEnemy();
+      break;
+    }
   }
 }
 
@@ -1423,12 +1697,19 @@ function tickTurnEffects() {
     e.atkDebuffTurns--;
     if (e.atkDebuffTurns === 0) { e.atkDebuffMult = 1; combatLog(`${e.name}'s ATK recovers.`, 'system'); }
   }
-  // Poison tick
+  // Enemy poison tick
   if (e.poisonTurns > 0) {
     e.hp -= e.poisonDmg;
     e.poisonTurns--;
     combatLog(`☠ ${e.name} suffers ${e.poisonDmg} poison damage! (${e.poisonTurns} turns left)`, 'damage');
     if (e.hp <= 0) return true; // enemy died from poison
+  }
+  // Player poison tick
+  if (p.playerPoisonTurns > 0) {
+    p.hp -= p.playerPoisonDmg;
+    p.playerPoisonTurns--;
+    combatLog(`🕷 Venom burns — you take ${p.playerPoisonDmg} poison damage! (${p.playerPoisonTurns} turns left)`, 'damage');
+    if (p.hp <= 0) return 'dead';
   }
   return false;
 }
@@ -1443,15 +1724,16 @@ function checkCombatEnd() {
     e.hp = 0;
     combatLog(`✨ ${e.name} is defeated!`, 'heal');
 
-    // XP gain
-    p.xp += e.xp;
-    combatLog(`Gained ${e.xp} XP!`, 'info');
-    addLog(`Defeated ${e.name}! +${e.xp} XP`, 'info');
+    // XP gain (boosted by xpMult accessory)
+    const xpGain = Math.round(e.xp * (p.xpMult || 1));
+    p.xp += xpGain;
+    combatLog(`Gained ${xpGain} XP!${p.xpMult > 1 ? ` (×${p.xpMult} bonus)` : ''}`, 'info');
+    addLog(`Defeated ${e.name}! +${xpGain} XP`, 'info');
 
-    // Gold drop
-    const gold = rng(e.goldRange[0], e.goldRange[1]);
+    // Gold drop (boosted by goldMult accessory)
+    const gold = Math.round(rng(e.goldRange[0], e.goldRange[1]) * (p.goldMult || 1));
     p.gold += gold;
-    combatLog(`Found ${gold} gold! 💰`, 'gold');
+    combatLog(`Found ${gold} gold! 💰${p.goldMult > 1 ? ` (×${p.goldMult} bonus)` : ''}`, 'gold');
     addLog(`+${gold} gold`, 'gold');
 
     p.kills++;
@@ -1510,46 +1792,79 @@ function shakePlayer() {
 //  ITEMS & INVENTORY
 // ============================================================
 const WEAPONS = [
-  { name:'Wooden Sword',  emoji:'🗡',  atk:3,  desc:'A basic sword.',    tier:1 },
-  { name:'Iron Sword',    emoji:'⚔',   atk:7,  desc:'Reliable iron.',     tier:2 },
-  { name:'Battle Axe',    emoji:'🪓',  atk:11, desc:'Heavy axe.',         tier:3 },
-  { name:'Flaming Sword', emoji:'🔥',  atk:16, desc:'Engulfed in flame.', tier:4 },
-  { name:'Legendary Blade',emoji:'⚡', atk:22, desc:'Forged by gods.',    tier:5 },
+  { name:'Rusty Dagger',    emoji:'🔪', atk:3,  desc:'Barely holds an edge.',       tier:1 },
+  { name:'Wooden Sword',    emoji:'🗡',  atk:6,  desc:'A basic carved sword.',       tier:1 },
+  { name:'Iron Sword',      emoji:'⚔',   atk:10, desc:'Reliable and sturdy.',        tier:2 },
+  { name:'Hunter\'s Bow',   emoji:'🏹',  atk:13, desc:'Silent and precise.',         tier:2 },
+  { name:'Battle Axe',      emoji:'🪓',  atk:17, desc:'Heavy and brutal.',           tier:3 },
+  { name:'Dark Blade',      emoji:'🖤',  atk:21, desc:'Forged in shadow.',           tier:3 },
+  { name:'Thunder Hammer',  emoji:'⚡',  atk:26, desc:'Crackles with lightning.',    tier:4 },
+  { name:'Flaming Sword',   emoji:'🔥',  atk:30, desc:'Wreathed in eternal flame.',  tier:4 },
+  { name:'Dragon Fang',     emoji:'🐲',  atk:36, desc:'Torn from an ancient dragon.',tier:5 },
+  { name:'Legendary Blade', emoji:'✨',  atk:44, desc:'Forged by gods themselves.',  tier:5 },
 ];
 
 const ARMORS = [
-  { name:'Leather Armor', emoji:'🧥',  def:3,  desc:'Basic protection.',  tier:1 },
-  { name:'Chain Mail',    emoji:'🛡',   def:7,  desc:'Interlocked rings.', tier:2 },
-  { name:'Iron Armor',    emoji:'🦺',  def:12, desc:'Heavy iron plates.', tier:3 },
-  { name:'Dragon Scale',  emoji:'🐉',  def:18, desc:'Scales of a dragon.',tier:4 },
-  { name:'Celestial Plate',emoji:'✨', def:25, desc:'Divine protection.', tier:5 },
+  { name:'Tattered Robe',    emoji:'👘', def:2,  desc:'Barely covers you.',          tier:1 },
+  { name:'Leather Armor',    emoji:'🧥', def:6,  desc:'Basic hide protection.',      tier:1 },
+  { name:'Chain Mail',       emoji:'🛡',  def:10, desc:'Interlocked iron rings.',     tier:2 },
+  { name:'Bronze Plate',     emoji:'🦺', def:15, desc:'Solid metal plate.',          tier:2 },
+  { name:'Iron Armor',       emoji:'⚙',  def:20, desc:'Heavy full iron plates.',     tier:3 },
+  { name:'Shadow Cloak',     emoji:'🌑', def:26, desc:'Woven from living shadow.',   tier:4 },
+  { name:'Dragon Scale',     emoji:'🐉', def:32, desc:'Scales of a slain dragon.',   tier:4 },
+  { name:'Celestial Plate',  emoji:'☀',  def:40, desc:'Blessed by divine power.',    tier:5 },
+];
+
+const ACCESSORIES = [
+  { name:'Lucky Charm',    emoji:'🍀', type:'accessory', stat:'goldMult',  val:1.3,  desc:'+30% gold drops',      price:45 },
+  { name:'Iron Ring',      emoji:'⚙',  type:'accessory', stat:'def',       val:5,    desc:'+5 Defense',           price:55 },
+  { name:'Ring of Power',  emoji:'💍', type:'accessory', stat:'atk',       val:6,    desc:'+6 Attack',            price:70 },
+  { name:'Amulet of Life', emoji:'📿', type:'accessory', stat:'maxHp',     val:25,   desc:'+25 Max HP',           price:65 },
+  { name:'Swift Boots',    emoji:'👟', type:'accessory', stat:'fleeBonus', val:1,    desc:'70% flee success rate',price:40 },
+  { name:'Scholar\'s Tome',emoji:'📚', type:'accessory', stat:'xpMult',    val:1.4,  desc:'+40% XP gain',         price:60 },
+  { name:'Vampire Ring',   emoji:'💎', type:'accessory', stat:'lifeDrain', val:0.18, desc:'Drain 18% dmg as HP',  price:95 },
+  { name:'War Pendant',    emoji:'⚔',  type:'accessory', stat:'atk',       val:10,   desc:'+10 Attack',           price:110 },
+  { name:'Guardian Seal',  emoji:'🔰', type:'accessory', stat:'def',       val:10,   desc:'+10 Defense',          price:105 },
+  { name:'Titan\'s Heart', emoji:'❤', type:'accessory', stat:'maxHp',     val:50,   desc:'+50 Max HP',           price:120 },
 ];
 
 const CONSUMABLES = [
-  { name:'Health Potion',   emoji:'🧪', type:'potion',    amount:1, desc:'+1 Potion', price: 20 },
-  { name:'Mega Potion',     emoji:'💊', type:'mega_potion',amount:3, desc:'+3 Potions',price: 50 },
-  { name:'Strength Draught',emoji:'💪', type:'str_boost', amount:3, desc:'+3 ATK perm.',price: 60 },
-  { name:'Iron Skin Tonic', emoji:'🦾', type:'def_boost', amount:3, desc:'+3 DEF perm.',price: 60 },
-  { name:'Life Crystal',    emoji:'💎', type:'hp_boost',  amount:15,desc:'+15 Max HP',  price: 80 },
+  { name:'Health Potion',    emoji:'🧪', type:'potion',      amount:1,  desc:'+1 Potion',          price:20  },
+  { name:'Mega Potion',      emoji:'💊', type:'mega_potion', amount:3,  desc:'+3 Potions',         price:50  },
+  { name:'Antidote',         emoji:'🫙', type:'antidote',    amount:1,  desc:'Cure all poison',    price:22  },
+  { name:'Strength Draught', emoji:'💪', type:'str_boost',   amount:3,  desc:'+3 ATK (perm)',      price:60  },
+  { name:'Iron Skin Tonic',  emoji:'🦾', type:'def_boost',   amount:3,  desc:'+3 DEF (perm)',      price:60  },
+  { name:'Life Crystal',     emoji:'💎', type:'hp_boost',    amount:15, desc:'+15 Max HP (perm)',  price:80  },
+  { name:'Elixir of Power',  emoji:'⚗',  type:'str_boost',   amount:6,  desc:'+6 ATK (perm)',      price:100 },
+  { name:'Scroll of Mending',emoji:'📜', type:'big_heal',    amount:1,  desc:'Restore 50% Max HP', price:70  },
+  { name:'XP Tome',          emoji:'📖', type:'xp_grant',    amount:50, desc:'+50 XP instantly',   price:55  },
 ];
 
 function generateItem(floor) {
-  const tier = Math.min(5, Math.ceil(floor / 1.2));
-  if (Math.random() < 0.5) {
-    return { ...WEAPONS[Math.min(tier-1, WEAPONS.length-1)], type:'weapon', price: tier*30 };
+  const wTier = Math.min(WEAPONS.length - 1, Math.floor(floor * 0.95));
+  const aTier = Math.min(ARMORS.length  - 1, Math.floor(floor * 0.75));
+  const roll = Math.random();
+  if (roll < 0.35) {
+    const idx = Math.max(0, wTier - rng(0,1));
+    return { ...WEAPONS[idx], type:'weapon', price:(idx+1)*32 };
+  } else if (roll < 0.65) {
+    const idx = Math.max(0, aTier - rng(0,1));
+    return { ...ARMORS[idx], type:'armor', price:(idx+1)*28 };
   } else {
-    return { ...ARMORS[Math.min(tier-1, ARMORS.length-1)], type:'armor', price: tier*28 };
+    const idx = rng(0, Math.min(floor - 1, ACCESSORIES.length - 1));
+    return { ...ACCESSORIES[idx] };
   }
 }
 
 function applyItem(item, source) {
   const p = game.player;
+  const tag = source === 'drop' ? 'Enemy dropped' : source === 'shop' ? 'Purchased' : 'Found';
   if (item.type === 'weapon') {
     const old = p.weapon ? p.weapon.name : 'Fists';
     if (!p.weapon || item.atk > p.weapon.atk) {
       p.weapon = item;
-      p.atk = 8 + item.atk + (p.level - 1) * 2;
-      addLog(`${source==='drop'?'Enemy dropped':'Found'}: ${item.emoji} ${item.name}! ATK +${item.atk} (replaced ${old})`, 'info');
+      p.atk = (p.classBaseAtk||8) + item.atk + (p.level - 1) * 2 + (p.accAtkBonus||0);
+      addLog(`${tag}: ${item.emoji} ${item.name}! ATK +${item.atk} (replaced ${old})`, 'info');
     } else {
       addLog(`Found ${item.name} but your current weapon is better.`, 'system');
     }
@@ -1557,27 +1872,55 @@ function applyItem(item, source) {
     const old = p.armor ? p.armor.name : 'Rags';
     if (!p.armor || item.def > p.armor.def) {
       p.armor = item;
-      p.def = 3 + item.def + (p.level - 1);
-      addLog(`${source==='drop'?'Enemy dropped':'Found'}: ${item.emoji} ${item.name}! DEF +${item.def} (replaced ${old})`, 'info');
+      p.def = (p.classBaseDef||3) + item.def + (p.level - 1) + (p.accDefBonus||0);
+      addLog(`${tag}: ${item.emoji} ${item.name}! DEF +${item.def} (replaced ${old})`, 'info');
     } else {
       addLog(`Found ${item.name} but your current armor is better.`, 'system');
     }
-  } else if (item.type === 'potion') {
+  } else if (item.type === 'accessory') {
+    // Remove old accessory bonuses
+    const old = p.accessory;
+    if (old) {
+      if (old.stat === 'atk')      { p.atk -= old.val; p.accAtkBonus -= old.val; }
+      if (old.stat === 'def')      { p.def -= old.val; p.accDefBonus -= old.val; }
+      if (old.stat === 'maxHp')    { p.maxHp -= old.val; p.hp = Math.min(p.hp, p.maxHp); }
+      if (old.stat === 'goldMult') p.goldMult = 1;
+      if (old.stat === 'xpMult')   p.xpMult  = 1;
+      if (old.stat === 'fleeBonus')p.fleeBonus = false;
+      if (old.stat === 'lifeDrain')p.lifeDrain = 0;
+    }
+    p.accessory = item;
+    if (item.stat === 'atk')      { p.atk += item.val; p.accAtkBonus = (p.accAtkBonus||0) + item.val; }
+    if (item.stat === 'def')      { p.def += item.val; p.accDefBonus = (p.accDefBonus||0) + item.val; }
+    if (item.stat === 'maxHp')    { p.maxHp += item.val; p.hp = Math.min(p.maxHp, p.hp + item.val); }
+    if (item.stat === 'goldMult') p.goldMult  = item.val;
+    if (item.stat === 'xpMult')   p.xpMult    = item.val;
+    if (item.stat === 'fleeBonus')p.fleeBonus = true;
+    if (item.stat === 'lifeDrain')p.lifeDrain  = item.val;
+    addLog(`${tag}: ${item.emoji} ${item.name}! ${item.desc}`, 'info');
+  } else if (item.type === 'potion' || item.type === 'mega_potion') {
     p.potions += item.amount;
-    addLog(`Got ${item.amount} potion(s)!`, 'heal');
-  } else if (item.type === 'mega_potion') {
-    p.potions += item.amount;
-    addLog(`Got ${item.amount} potions!`, 'heal');
+    addLog(`Got ${item.amount} potion(s)! 🧪`, 'heal');
   } else if (item.type === 'str_boost') {
-    p.atk += item.amount;
-    addLog(`Drank Strength Draught! ATK +${item.amount}`, 'info');
+    p.atk += item.amount; p.classBaseAtk = (p.classBaseAtk||8) + item.amount;
+    addLog(`Drank Strength Draught! ATK +${item.amount} (permanent)`, 'info');
   } else if (item.type === 'def_boost') {
-    p.def += item.amount;
-    addLog(`Drank Iron Skin Tonic! DEF +${item.amount}`, 'info');
+    p.def += item.amount; p.classBaseDef = (p.classBaseDef||3) + item.amount;
+    addLog(`Drank Iron Skin Tonic! DEF +${item.amount} (permanent)`, 'info');
   } else if (item.type === 'hp_boost') {
-    p.maxHp += item.amount;
-    p.hp = Math.min(p.maxHp, p.hp + item.amount);
-    addLog(`Used Life Crystal! Max HP +${item.amount}`, 'heal');
+    p.maxHp += item.amount; p.hp = Math.min(p.maxHp, p.hp + item.amount);
+    addLog(`Used Life Crystal! Max HP +${item.amount} (permanent)`, 'heal');
+  } else if (item.type === 'antidote') {
+    p.playerPoisonTurns = 0; p.playerPoisonDmg = 0;
+    addLog(`Drank Antidote! All poison cured! 🫙`, 'heal');
+  } else if (item.type === 'big_heal') {
+    const amt = Math.round(p.maxHp * 0.5);
+    p.hp = Math.min(p.maxHp, p.hp + amt);
+    addLog(`Used Scroll of Mending! Restored ${amt} HP! 📜`, 'heal');
+  } else if (item.type === 'xp_grant') {
+    p.xp += item.amount;
+    addLog(`Read XP Tome! +${item.amount} XP! 📖`, 'info');
+    checkLevelUp();
   }
   updateHUD();
   updateSidePanel();
@@ -1610,6 +1953,15 @@ function showInventory() {
     <div class="item-desc">${p.armor ? p.armor.desc : 'Barely counts as armor.'}</div>
     <div class="item-stat">DEF: ${p.def}</div>
     ${p.armor ? '<div class="item-tag">ARMOR</div>' : ''}
+  </div>`;
+
+  // Accessory slot
+  html += `<div class="item-card ${p.accessory?'equipped':''}">
+    <div class="item-icon">${p.accessory ? p.accessory.emoji : '○'}</div>
+    <div class="item-name">${p.accessory ? p.accessory.name : 'No Accessory'}</div>
+    <div class="item-desc">${p.accessory ? p.accessory.desc : 'Equip a ring, amulet or charm.'}</div>
+    <div class="item-stat" style="color:#cc88ff">${p.accessory ? '✦ Equipped' : ''}</div>
+    ${p.accessory ? '<div class="item-tag" style="background:#8844ff;color:#fff">ACCSR</div>' : ''}
   </div>`;
 
   // Potions
@@ -1656,13 +2008,23 @@ function openShop() {
 
 function renderShop() {
   const p = game.player;
-  // Pick 4-5 random items for sale
   const forSale = [];
-  const wIdx = Math.min(game.floor - 1, WEAPONS.length - 1);
+  const wIdx = Math.min(game.floor, WEAPONS.length - 1);
   const aIdx = Math.min(game.floor - 1, ARMORS.length - 1);
-  if (wIdx >= 0) forSale.push({...WEAPONS[wIdx], type:'weapon', price: (wIdx+1)*35 });
-  if (aIdx >= 0) forSale.push({...ARMORS[aIdx], type:'armor', price: (aIdx+1)*32 });
-  forSale.push(...CONSUMABLES.slice(0, 3));
+  // Best + previous tier weapon
+  forSale.push({...WEAPONS[wIdx], type:'weapon', price:(wIdx+1)*38});
+  if (wIdx > 0) forSale.push({...WEAPONS[wIdx-1], type:'weapon', price:wIdx*30});
+  // Best + previous tier armor
+  forSale.push({...ARMORS[aIdx], type:'armor', price:(aIdx+1)*34});
+  if (aIdx > 0) forSale.push({...ARMORS[aIdx-1], type:'armor', price:aIdx*26});
+  // 2 random accessories scaled to floor
+  const accMax = Math.min(game.floor + 1, ACCESSORIES.length);
+  const acc1 = ACCESSORIES[rng(0, accMax - 1)];
+  forSale.push({...acc1});
+  const acc2 = ACCESSORIES[rng(0, accMax - 1)];
+  if (acc2.name !== acc1.name) forSale.push({...acc2});
+  // Consumables
+  forSale.push(...CONSUMABLES.slice(0, 4));
 
   let html = `<div style="color:#888; font-size:0.85em; margin-bottom:10px; text-align:center;">
     Your gold: <span style="color:#ffd700">💰 ${p.gold}</span> &nbsp;|&nbsp; Click an item to purchase
@@ -1759,7 +2121,9 @@ function updateSidePanel() {
   document.getElementById('sp-def').textContent = p.def;
   document.getElementById('sp-gold').textContent = p.gold;
   document.getElementById('sp-weapon').textContent = p.weapon ? p.weapon.name : 'Fists';
-  document.getElementById('sp-armor').textContent = p.armor ? p.armor.name : 'Rags';
+  document.getElementById('sp-armor').textContent  = p.armor  ? p.armor.name  : 'Rags';
+  const acEl = document.getElementById('sp-accsr');
+  if (acEl) acEl.textContent = p.accessory ? p.accessory.name : 'None';
   document.getElementById('sp-floor').textContent = game.floor;
   document.getElementById('sp-enemies').textContent = game.enemies.filter(e=>e.alive).length;
 }
@@ -1815,6 +2179,9 @@ function showScreen(name) {
     document.getElementById('floor-indicator').style.display = 'block';
     document.getElementById('log-area').style.display = 'block';
     document.getElementById('controls-hint').style.display = 'block';
+    if ('ontouchstart' in window) document.getElementById('dpad-area').style.display = 'flex';
+  } else {
+    document.getElementById('dpad-area').style.display = 'none';
   }
 }
 
@@ -1857,10 +2224,29 @@ function gameWin() {
   const screen = document.getElementById('gameover-screen');
   screen.className = 'win';
   document.getElementById('gameover-title').textContent = '🏆 VICTORY!';
-  document.getElementById('gameover-msg').textContent = 'The Ancient Dragon falls! You are the champion of the dungeon!';
+  document.getElementById('gameover-msg').textContent = 'The Ancient Dragon falls! You are the undisputed champion of the dungeon!';
   const cls2 = CLASSES[game.classId] || CLASSES.warrior;
   document.getElementById('gameover-stats').innerHTML =
     `${cls2.name} &nbsp;|&nbsp; Floor ${game.floor} cleared &nbsp;|&nbsp; Level ${game.player.level} &nbsp;|&nbsp; ${game.player.kills} kills &nbsp;|&nbsp; 💰 ${game.player.gold}`;
+}
+
+// ============================================================
+//  TOUCH / D-PAD CONTROLS
+// ============================================================
+function dpMove(dx, dy, e) {
+  if (e) e.preventDefault();
+  if (game.state !== 'dungeon') return;
+  movePlayer(dx, dy);
+}
+function dpInteract(e) {
+  if (e) e.preventDefault();
+  if (game.state !== 'dungeon') return;
+  interact();
+}
+function dpInventory(e) {
+  if (e) e.preventDefault();
+  if (game.state !== 'dungeon') return;
+  showInventory();
 }
 
 // ============================================================
@@ -1875,6 +2261,29 @@ function rng(min, max) {
 // ============================================================
 window.onload = () => {
   document.getElementById('title-screen').style.display = 'block';
+
+  // Canvas swipe-to-move for touch screens
+  const cvs = document.getElementById('dungeon-canvas');
+  let _tx = 0, _ty = 0;
+  cvs.addEventListener('touchstart', e => {
+    _tx = e.touches[0].clientX;
+    _ty = e.touches[0].clientY;
+    e.preventDefault();
+  }, { passive: false });
+  cvs.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - _tx;
+    const dy = e.changedTouches[0].clientY - _ty;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 20) return;
+    if (game.state !== 'dungeon') return;
+    if (Math.abs(dx) > Math.abs(dy)) movePlayer(dx > 0 ? 1 : -1, 0);
+    else movePlayer(0, dy > 0 ? 1 : -1);
+    e.preventDefault();
+  }, { passive: false });
+
+  // Auto-show D-pad on touch devices
+  if ('ontouchstart' in window) {
+    document.getElementById('dpad-area').style.display = 'flex';
+  }
 };
 </script>
 </body>
