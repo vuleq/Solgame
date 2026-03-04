@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dungeon of Shadows - RPG Adventure</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0f;
+    color: #e0d0b0;
+    font-family: 'Courier New', monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+  #game-container {
+    width: 800px;
+    max-width: 100vw;
+    position: relative;
+  }
+  /* ---- TITLE SCREEN ---- */
+  #title-screen {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  #title-screen h1 {
+    font-size: 3em;
+    color: #ffd700;
+    text-shadow: 0 0 20px #ff8800, 0 0 40px #ff4400;
+    letter-spacing: 4px;
+    margin-bottom: 10px;
+    animation: pulse 2s infinite;
+  }
+  #title-screen h2 {
+    font-size: 1.2em;
+    color: #aaa;
+    margin-bottom: 40px;
+    letter-spacing: 2px;
+  }
+  .title-art {
+    font-size: 2.5em;
+    margin: 20px 0;
+    line-height: 1.4;
+    color: #c8a060;
+  }
+  .btn {
+    background: linear-gradient(135deg, #2a1a0a, #4a3010);
+    border: 2px solid #ffd700;
+    color: #ffd700;
+    padding: 12px 30px;
+    font-size: 1.1em;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: all 0.2s;
+    margin: 8px;
+    text-transform: uppercase;
+  }
+  .btn:hover {
+    background: linear-gradient(135deg, #4a3010, #6a5020);
+    box-shadow: 0 0 15px #ffd700;
+    transform: translateY(-2px);
+  }
+  .btn:active { transform: translateY(0); }
+  .btn-danger {
+    border-color: #ff4444;
+    color: #ff4444;
+  }
+  .btn-danger:hover { box-shadow: 0 0 15px #ff4444; }
+  .btn-green {
+    border-color: #44ff88;
+    color: #44ff88;
+  }
+  .btn-green:hover { box-shadow: 0 0 15px #44ff88; }
+
+  /* ---- MAIN GAME ---- */
+  #game-screen { display: none; }
+  #hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(to right, #1a0e04, #100a04, #1a0e04);
+    border: 2px solid #5a3a10;
+    border-bottom: none;
+    padding: 8px 15px;
+    font-size: 0.85em;
+  }
+  .hud-section { display: flex; gap: 15px; align-items: center; }
+  .hud-label { color: #888; font-size: 0.9em; }
+  .hud-val { color: #ffd700; font-weight: bold; }
+  .bar-container {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .bar {
+    width: 120px; height: 14px;
+    background: #1a0a0a;
+    border: 1px solid #444;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    transition: width 0.3s;
+    border-radius: 2px;
+  }
+  .hp-bar { background: linear-gradient(to right, #880000, #dd2222); }
+  .xp-bar { background: linear-gradient(to right, #0044aa, #2288ff); }
+
+  /* ---- DUNGEON CANVAS ---- */
+  #dungeon-area {
+    display: flex;
+    gap: 0;
+    border: 2px solid #5a3a10;
+    background: #050508;
+  }
+  #dungeon-canvas {
+    display: block;
+    image-rendering: pixelated;
+  }
+  #side-panel {
+    width: 200px;
+    background: #0d0a04;
+    border-left: 2px solid #5a3a10;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 0.8em;
+    overflow-y: auto;
+    max-height: 480px;
+  }
+  .panel-title {
+    color: #ffd700;
+    border-bottom: 1px solid #5a3a10;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+    font-size: 0.9em;
+    letter-spacing: 1px;
+  }
+  .stat-row { display: flex; justify-content: space-between; margin: 2px 0; }
+  .stat-name { color: #888; }
+  .stat-val { color: #e0d0b0; }
+  .stat-val.good { color: #44ff88; }
+  .stat-val.warn { color: #ffaa00; }
+
+  /* ---- LOG AREA ---- */
+  #log-area {
+    border: 2px solid #5a3a10;
+    border-top: 1px solid #3a2008;
+    background: #060404;
+    padding: 6px 10px;
+    height: 90px;
+    overflow-y: auto;
+    font-size: 0.78em;
+    line-height: 1.5;
+  }
+  .log-entry { margin: 1px 0; }
+  .log-entry.damage { color: #ff6666; }
+  .log-entry.heal { color: #66ff99; }
+  .log-entry.gold { color: #ffd700; }
+  .log-entry.info { color: #88aaff; }
+  .log-entry.boss { color: #ff44ff; font-weight: bold; }
+  .log-entry.system { color: #aaa; font-style: italic; }
+
+  /* ---- COMBAT SCREEN ---- */
+  #combat-screen {
+    display: none;
+    padding: 20px;
+    border: 2px solid #5a3a10;
+    background: #060404;
+    min-height: 480px;
+  }
+  .combat-arena {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin: 20px 0;
+    min-height: 180px;
+  }
+  .combatant {
+    text-align: center;
+    width: 180px;
+  }
+  .combatant-sprite {
+    font-size: 5em;
+    line-height: 1;
+    margin-bottom: 10px;
+    animation: breathe 3s infinite;
+  }
+  .enemy-sprite { animation: float 2s infinite; }
+  .combatant-name {
+    font-size: 1.1em;
+    color: #ffd700;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+  .combat-bar {
+    width: 100%;
+    height: 16px;
+    background: #1a0a0a;
+    border: 1px solid #444;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+  .combat-bar-fill {
+    height: 100%;
+    transition: width 0.4s;
+  }
+  .combat-vs {
+    font-size: 2.5em;
+    color: #ff4444;
+    text-shadow: 0 0 10px #ff0000;
+    font-weight: bold;
+  }
+  .combat-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 20px;
+  }
+  #combat-log {
+    margin-top: 15px;
+    background: #060404;
+    border: 1px solid #3a2008;
+    padding: 8px;
+    height: 80px;
+    overflow-y: auto;
+    font-size: 0.8em;
+  }
+  .shake { animation: shake 0.3s; }
+  .hit-flash { animation: hit 0.3s; }
+
+  /* ---- INVENTORY / SHOP ---- */
+  #overlay-screen {
+    display: none;
+    padding: 20px;
+    border: 2px solid #5a3a10;
+    background: #060404;
+    min-height: 480px;
+  }
+  .overlay-title {
+    font-size: 1.5em;
+    color: #ffd700;
+    text-align: center;
+    margin-bottom: 15px;
+    letter-spacing: 3px;
+    text-shadow: 0 0 10px #ff8800;
+  }
+  .item-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 8px;
+    margin-bottom: 15px;
+  }
+  .item-card {
+    background: #1a1008;
+    border: 1px solid #4a3010;
+    padding: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .item-card:hover {
+    border-color: #ffd700;
+    background: #2a1808;
+    box-shadow: 0 0 8px rgba(255,215,0,0.3);
+  }
+  .item-card.equipped { border-color: #44ff88; }
+  .item-icon { font-size: 1.8em; }
+  .item-name { font-size: 0.85em; color: #ffd700; margin: 4px 0; }
+  .item-desc { font-size: 0.72em; color: #888; }
+  .item-stat { font-size: 0.78em; color: #44ff88; }
+  .item-cost { font-size: 0.78em; color: #ffd700; position: absolute; top: 6px; right: 6px; }
+  .item-tag {
+    font-size: 0.65em;
+    background: #44ff88;
+    color: #000;
+    padding: 1px 4px;
+    border-radius: 2px;
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+  }
+
+  /* ---- GAME OVER / WIN ---- */
+  #gameover-screen {
+    display: none;
+    text-align: center;
+    padding: 60px 20px;
+  }
+  #gameover-screen h1 { font-size: 3em; margin-bottom: 20px; }
+  .dead h1 { color: #ff2222; text-shadow: 0 0 20px #ff0000; }
+  .win h1 { color: #ffd700; text-shadow: 0 0 20px #ff8800; }
+  #gameover-screen p { color: #aaa; margin-bottom: 30px; font-size: 1.1em; }
+
+  /* ---- ANIMATIONS ---- */
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+  @keyframes hit {
+    0% { filter: brightness(1); }
+    50% { filter: brightness(3) sepia(1) hue-rotate(-30deg); }
+    100% { filter: brightness(1); }
+  }
+  @keyframes levelup {
+    0% { transform: scale(1); color: #e0d0b0; }
+    50% { transform: scale(1.3); color: #ffd700; text-shadow: 0 0 20px #ffd700; }
+    100% { transform: scale(1); color: #e0d0b0; }
+  }
+  .levelup-anim { animation: levelup 1s; }
+
+  /* ---- CHARACTER SELECT ---- */
+  #char-select { display: none; }
+  .class-cards {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin: 20px 0;
+  }
+  .class-card {
+    width: 200px;
+    background: linear-gradient(160deg, #1a1008, #0e0804);
+    border: 2px solid #5a3a10;
+    padding: 18px 14px;
+    cursor: pointer;
+    transition: all 0.25s;
+    text-align: center;
+  }
+  .class-card:hover {
+    border-color: #ffd700;
+    background: linear-gradient(160deg, #2e1d0a, #1a1008);
+    box-shadow: 0 0 20px rgba(255,215,0,0.25);
+    transform: translateY(-4px);
+  }
+  .class-card.selected {
+    border-color: #44ff88;
+    box-shadow: 0 0 20px rgba(68,255,136,0.3);
+  }
+  .class-emoji { font-size: 3.5em; margin-bottom: 8px; }
+  .class-name {
+    font-size: 1.2em;
+    color: #ffd700;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+  .class-flavor { font-size: 0.75em; color: #888; margin-bottom: 10px; }
+  .class-stats { font-size: 0.78em; color: #aaa; line-height: 1.8; }
+  .class-skills { margin-top: 10px; border-top: 1px solid #3a2008; padding-top: 8px; }
+  .class-skill-line { font-size: 0.72em; color: #88aaff; margin: 2px 0; }
+
+  /* ---- SKILL BUTTONS ---- */
+  .btn-skill {
+    border-color: #8844ff;
+    color: #cc88ff;
+    position: relative;
+  }
+  .btn-skill:hover { box-shadow: 0 0 15px #8844ff; }
+  .btn-skill:disabled, .btn-skill.on-cd {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  .skill-cd-badge {
+    position: absolute;
+    top: -6px; right: -6px;
+    background: #ff4444;
+    color: #fff;
+    font-size: 0.65em;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: bold;
+  }
+  #status-bar {
+    font-size: 0.75em;
+    color: #aaa;
+    text-align: center;
+    min-height: 18px;
+    margin-top: 6px;
+  }
+  .buff-tag {
+    display: inline-block;
+    background: #1a3355;
+    border: 1px solid #3366aa;
+    color: #88bbff;
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin: 0 3px;
+  }
+  .debuff-tag {
+    display: inline-block;
+    background: #331100;
+    border: 1px solid #884400;
+    color: #ffaa44;
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin: 0 3px;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: #0a0a0f; }
+  ::-webkit-scrollbar-thumb { background: #4a3010; border-radius: 2px; }
+
+  #floor-indicator {
+    text-align: center;
+    font-size: 0.8em;
+    color: #888;
+    padding: 3px;
+    border: 2px solid #5a3a10;
+    border-top: none;
+    background: #080604;
+    letter-spacing: 2px;
+  }
+  #controls-hint {
+    text-align: center;
+    font-size: 0.7em;
+    color: #555;
+    padding: 4px;
+  }
+</style>
+</head>
+<body>
+<div id="game-container">
+
+  <!-- TITLE SCREEN -->
+  <div id="title-screen">
+    <!-- Phase 1: Title -->
+    <div id="title-main">
+      <div class="title-art">⚔️  🏰  🐉</div>
+      <h1>DUNGEON OF SHADOWS</h1>
+      <h2>— An RPG Adventure —</h2>
+      <p style="color:#666; margin-bottom:30px; font-size:0.85em;">
+        Descend into the dungeon. Slay monsters. Claim the treasure.<br>
+        Defeat the Ancient Dragon and escape!
+      </p>
+      <button class="btn" onclick="showCharSelect()">⚔ BEGIN QUEST</button>
+      <br><br>
+      <div style="color:#555; font-size:0.8em;">
+        Arrow Keys to move &nbsp;|&nbsp; E to interact &nbsp;|&nbsp; I for inventory<br>
+        Collect gold • Level up • Find gear • Beat the boss
+      </div>
+    </div>
+    <!-- Phase 2: Character Select -->
+    <div id="char-select">
+      <div class="title-art" style="font-size:1.6em; margin-bottom:6px;">⚔️  🏰  🐉</div>
+      <h1 style="font-size:2em; margin-bottom:4px;">CHOOSE YOUR HERO</h1>
+      <p style="color:#666; margin-bottom:18px; font-size:0.82em;">Each class has unique skills to help defeat the final boss!</p>
+      <div class="class-cards">
+        <!-- Warrior -->
+        <div class="class-card" onclick="selectClass('warrior')">
+          <div class="class-emoji">⚔️</div>
+          <div class="class-name">WARRIOR</div>
+          <div class="class-flavor">Stalwart knight with iron will and unbreakable defense.</div>
+          <div class="class-stats">
+            ❤ HP: 45 &nbsp; ⚔ ATK: 8 &nbsp; 🛡 DEF: 6
+          </div>
+          <div class="class-skills">
+            <div class="class-skill-line">🛡 Shield Bash — 0.8× ATK + weaken enemy (CD 3)</div>
+            <div class="class-skill-line">💢 War Cry — +50% ATK for 2 turns (CD 4)</div>
+          </div>
+        </div>
+        <!-- Mage -->
+        <div class="class-card" onclick="selectClass('mage')">
+          <div class="class-emoji">🔮</div>
+          <div class="class-name">MAGE</div>
+          <div class="class-flavor">Master of arcane arts whose spells pierce any armor.</div>
+          <div class="class-stats">
+            ❤ HP: 25 &nbsp; ⚔ ATK: 14 &nbsp; 🛡 DEF: 2
+          </div>
+          <div class="class-skills">
+            <div class="class-skill-line">🔥 Fireball — 2.5× magic dmg, ignores 60% DEF (CD 2)</div>
+            <div class="class-skill-line">🌀 Mana Shield — Block next attack (CD 4)</div>
+          </div>
+        </div>
+        <!-- Rogue -->
+        <div class="class-card" onclick="selectClass('rogue')">
+          <div class="class-emoji">🥷</div>
+          <div class="class-name">ROGUE</div>
+          <div class="class-flavor">Swift assassin who strikes from shadows with lethal precision.</div>
+          <div class="class-stats">
+            ❤ HP: 32 &nbsp; ⚔ ATK: 11 &nbsp; 🛡 DEF: 3
+          </div>
+          <div class="class-skills">
+            <div class="class-skill-line">🗡 Backstab — 3× ATK guaranteed crit (CD 3)</div>
+            <div class="class-skill-line">☠ Poison Blade — Poison enemy 3 turns (CD 3)</div>
+          </div>
+        </div>
+      </div>
+      <div style="color:#555; font-size:0.78em;">Click a class to begin your adventure</div>
+      <br>
+      <button class="btn" style="font-size:0.85em; padding:8px 20px;" onclick="backToTitle()">← Back</button>
+    </div>
+  </div>
+
+  <!-- MAIN GAME SCREEN -->
+  <div id="game-screen">
+    <div id="hud">
+      <div class="hud-section">
+        <span class="hud-label">HP</span>
+        <div class="bar-container">
+          <div class="bar"><div class="bar-fill hp-bar" id="hud-hp-bar" style="width:100%"></div></div>
+          <span class="hud-val" id="hud-hp">--/--</span>
+        </div>
+      </div>
+      <div class="hud-section">
+        <span class="hud-label">LV</span><span class="hud-val" id="hud-level">1</span>
+        <span class="hud-label">XP</span>
+        <div class="bar-container">
+          <div class="bar" style="width:80px"><div class="bar-fill xp-bar" id="hud-xp-bar" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div class="hud-section">
+        <span class="hud-label">⚔</span><span class="hud-val" id="hud-atk">--</span>
+        <span class="hud-label">🛡</span><span class="hud-val" id="hud-def">--</span>
+        <span class="hud-label">💰</span><span class="hud-val" id="hud-gold">0</span>
+      </div>
+      <div>
+        <button class="btn" style="padding:4px 10px; font-size:0.75em;" onclick="showInventory()">📦 INV</button>
+      </div>
+    </div>
+    <div id="dungeon-area">
+      <canvas id="dungeon-canvas" width="600" height="480"></canvas>
+      <div id="side-panel">
+        <div class="panel-title">⚔ HERO</div>
+        <div class="stat-row"><span class="stat-name">Name</span><span class="stat-val" id="sp-name">Hero</span></div>
+        <div class="stat-row"><span class="stat-name">Level</span><span class="stat-val" id="sp-level">1</span></div>
+        <div class="stat-row"><span class="stat-name">HP</span><span class="stat-val" id="sp-hp">--</span></div>
+        <div class="stat-row"><span class="stat-name">ATK</span><span class="stat-val" id="sp-atk">--</span></div>
+        <div class="stat-row"><span class="stat-name">DEF</span><span class="stat-val" id="sp-def">--</span></div>
+        <div class="stat-row"><span class="stat-name">Gold</span><span class="stat-val good" id="sp-gold">0</span></div>
+        <div style="margin-top:8px" class="panel-title">🎒 EQUIPPED</div>
+        <div class="stat-row"><span class="stat-name">Weapon</span><span class="stat-val" id="sp-weapon">Fists</span></div>
+        <div class="stat-row"><span class="stat-name">Armor</span><span class="stat-val" id="sp-armor">Rags</span></div>
+        <div style="margin-top:8px" class="panel-title">🗺 DUNGEON</div>
+        <div class="stat-row"><span class="stat-name">Floor</span><span class="stat-val warn" id="sp-floor">1</span></div>
+        <div class="stat-row"><span class="stat-name">Enemies</span><span class="stat-val" id="sp-enemies">--</span></div>
+        <div style="margin-top:8px; color:#555; font-size:0.8em;">
+          Arrows: Move<br>
+          E: Interact<br>
+          I: Inventory<br>
+          Clear floor to advance
+        </div>
+      </div>
+    </div>
+    <div id="floor-indicator" id="floor-display">FLOOR 1 — THE ENTRANCE</div>
+    <div id="log-area"></div>
+    <div id="controls-hint">Move to fight enemies automatically • Stand on 🚪 to advance when floor is clear</div>
+  </div>
+
+  <!-- COMBAT SCREEN -->
+  <div id="combat-screen">
+    <div style="text-align:center; color:#ffd700; font-size:1.3em; letter-spacing:2px; margin-bottom:10px;">⚔ BATTLE ⚔</div>
+    <div class="combat-arena">
+      <div class="combatant" id="player-combatant">
+        <div class="combatant-sprite" id="player-sprite">🧙</div>
+        <div class="combatant-name" id="player-combat-name">Hero</div>
+        <div style="font-size:0.8em; color:#888;">HP: <span id="player-combat-hp">--</span></div>
+        <div class="combat-bar"><div class="combat-bar-fill hp-bar" id="player-combat-bar" style="width:100%"></div></div>
+      </div>
+      <div class="combat-vs">VS</div>
+      <div class="combatant" id="enemy-combatant">
+        <div class="combatant-sprite enemy-sprite" id="enemy-sprite">👹</div>
+        <div class="combatant-name" id="enemy-name">Enemy</div>
+        <div style="font-size:0.8em; color:#888;">HP: <span id="enemy-combat-hp">--</span></div>
+        <div class="combat-bar"><div class="combat-bar-fill" id="enemy-combat-bar" style="width:100%; background:linear-gradient(to right, #880066, #dd22aa)"></div></div>
+      </div>
+    </div>
+    <div class="combat-actions">
+      <button class="btn" onclick="combatAction('attack')">⚔ Attack</button>
+      <button class="btn" onclick="combatAction('heavy')">💥 Heavy Strike</button>
+      <button class="btn btn-skill" id="skill1-btn" onclick="combatAction('skill1')">✨ Skill 1</button>
+      <button class="btn btn-skill" id="skill2-btn" onclick="combatAction('skill2')">🌟 Skill 2</button>
+      <button class="btn btn-green" onclick="combatAction('potion')">🧪 Potion (<span id="potion-count">0</span>)</button>
+      <button class="btn" onclick="combatAction('flee')">🏃 Flee</button>
+    </div>
+    <div id="status-bar"></div>
+    <div id="combat-log"></div>
+  </div>
+
+  <!-- INVENTORY / SHOP OVERLAY -->
+  <div id="overlay-screen">
+    <div class="overlay-title" id="overlay-title">INVENTORY</div>
+    <div id="overlay-content"></div>
+    <div style="text-align:center; margin-top:15px;">
+      <button class="btn" onclick="closeOverlay()">✖ Close</button>
+    </div>
+  </div>
+
+  <!-- GAME OVER -->
+  <div id="gameover-screen">
+    <h1 id="gameover-title">YOU DIED</h1>
+    <p id="gameover-msg">The dungeon claims another soul...</p>
+    <div id="gameover-stats" style="margin-bottom:20px; color:#888; font-size:0.9em;"></div>
+    <button class="btn" onclick="location.reload()">↩ Play Again</button>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+//  GAME STATE
+// ============================================================
+const TILE = 30; // px per tile
+const COLS = 20;
+const ROWS = 16;
+
+const TILE_EMPTY    = 0;
+const TILE_WALL     = 1;
+const TILE_FLOOR    = 2;
+const TILE_DOOR     = 3;
+const TILE_CHEST    = 4;
+const TILE_SHOP     = 5;
+const TILE_STAIRS   = 6;
+const TILE_TRAP     = 7;
+
+const COLORS = {
+  wall:   '#2a1a0a',
+  wallEdge: '#5a3a10',
+  floor:  '#0e0a06',
+  floorAlt: '#100c08',
+  door:   '#6a4020',
+  chest:  '#ffd700',
+  shop:   '#8844ff',
+  stairs: '#00aaff',
+  trap:   '#ff4400',
+  fog:    '#000000',
+  seen:   'rgba(0,0,0,0.6)',
+};
+
+let game = {};
+
+// ============================================================
+//  CHARACTER CLASSES
+// ============================================================
+const CLASSES = {
+  warrior: {
+    name: 'Warrior', emoji: '⚔️', sprite: '🧙‍♂️',
+    hp: 45, atk: 8, def: 6, potions: 3, gold: 10,
+    skills: [
+      { id:'shield_bash', name:'Shield Bash',   emoji:'🛡', desc:'0.8× dmg + weaken enemy ATK', cdMax:3 },
+      { id:'war_cry',     name:'War Cry',        emoji:'💢', desc:'+50% ATK for 2 turns',        cdMax:4 },
+    ]
+  },
+  mage: {
+    name: 'Mage', emoji: '🔮', sprite: '🔮',
+    hp: 25, atk: 14, def: 2, potions: 2, gold: 20,
+    skills: [
+      { id:'fireball',    name:'Fireball',       emoji:'🔥', desc:'2.5× magic, ignores 60% DEF', cdMax:2 },
+      { id:'mana_shield', name:'Mana Shield',    emoji:'🌀', desc:'Block next enemy attack',      cdMax:4 },
+    ]
+  },
+  rogue: {
+    name: 'Rogue', emoji: '🥷', sprite: '🥷',
+    hp: 32, atk: 11, def: 3, potions: 2, gold: 25,
+    skills: [
+      { id:'backstab',    name:'Backstab',       emoji:'🗡', desc:'3× ATK guaranteed crit',       cdMax:3 },
+      { id:'poison',      name:'Poison Blade',   emoji:'☠',  desc:'Poison 5 dmg/turn × 3 turns',  cdMax:3 },
+    ]
+  },
+};
+
+function initGame(classId) {
+  const cls = CLASSES[classId] || CLASSES.warrior;
+  game = {
+    floor: 1,
+    maxFloors: 6,
+    state: 'dungeon',
+    turn: 0,
+    classId: classId,
+    player: {
+      x: 1, y: 1,
+      hp: cls.hp, maxHp: cls.hp,
+      atk: cls.atk, def: cls.def,
+      level: 1, xp: 0, xpNext: 20,
+      gold: cls.gold,
+      potions: cls.potions,
+      weapon: null,
+      armor: null,
+      kills: 0,
+      stepsOnStairs: 0,
+      // Skills
+      skill1CD: 0, skill2CD: 0,
+      // Status effects
+      atkBuffMult: 1, atkBuffTurns: 0,
+      shielded: false,
+    },
+    map: [],
+    enemies: [],
+    items: [],
+    fog: [],
+    currentEnemy: null,
+    floorCleared: false,
+    logs: [],
+    cameraTick: 0,
+  };
+  generateFloor(1);
+  updateHUD();
+  render();
+  addLog(`Welcome, ${cls.name}! Descend the dungeon and slay the Ancient Dragon!`, 'info');
+  addLog('Move with Arrow Keys. Walk into enemies to fight.', 'system');
+  addLog(`Your skills: ${cls.skills.map(s => s.emoji + ' ' + s.name).join(' | ')}`, 'info');
+}
+
+// ============================================================
+//  MAP GENERATION
+// ============================================================
+function generateFloor(floorNum) {
+  game.floor = floorNum;
+  game.map = Array.from({length: ROWS}, () => Array(COLS).fill(TILE_WALL));
+  game.fog = Array.from({length: ROWS}, () => Array(COLS).fill(true)); // true = fog
+  game.enemies = [];
+  game.items = [];
+  game.floorCleared = false;
+
+  // Generate rooms using BSP-lite approach
+  const rooms = [];
+  const attempts = 40;
+
+  for (let i = 0; i < attempts; i++) {
+    const w = rng(4, 9);
+    const h = rng(3, 7);
+    const x = rng(1, COLS - w - 1);
+    const y = rng(1, ROWS - h - 1);
+    if (!rooms.some(r => rectsOverlap(r, {x,y,w,h}, 1))) {
+      rooms.push({x, y, w, h});
+    }
+    if (rooms.length >= 8) break;
+  }
+
+  // Carve rooms
+  rooms.forEach(r => {
+    for (let ry = r.y; ry < r.y + r.h; ry++) {
+      for (let rx = r.x; rx < r.x + r.w; rx++) {
+        game.map[ry][rx] = TILE_FLOOR;
+      }
+    }
+  });
+
+  // Connect rooms with corridors
+  for (let i = 1; i < rooms.length; i++) {
+    const a = rooms[i-1], b = rooms[i];
+    const cx1 = Math.floor(a.x + a.w/2);
+    const cy1 = Math.floor(a.y + a.h/2);
+    const cx2 = Math.floor(b.x + b.w/2);
+    const cy2 = Math.floor(b.y + b.h/2);
+    // Horizontal then vertical
+    const minX = Math.min(cx1,cx2), maxX = Math.max(cx1,cx2);
+    for (let x = minX; x <= maxX; x++) game.map[cy1][x] = TILE_FLOOR;
+    const minY = Math.min(cy1,cy2), maxY = Math.max(cy1,cy2);
+    for (let y = minY; y <= maxY; y++) game.map[y][cx2] = TILE_FLOOR;
+  }
+
+  // Place player in first room
+  const startRoom = rooms[0];
+  game.player.x = startRoom.x + 1;
+  game.player.y = startRoom.y + 1;
+
+  // Place stairs in last room
+  const lastRoom = rooms[rooms.length - 1];
+  const sx = lastRoom.x + Math.floor(lastRoom.w/2);
+  const sy = lastRoom.y + Math.floor(lastRoom.h/2);
+  game.map[sy][sx] = TILE_STAIRS;
+
+  // Place boss on floor 6 (last floor)
+  const isBossFloor = floorNum >= game.maxFloors;
+
+  // Place enemies
+  const enemyCount = Math.min(3 + floorNum * 2, 14);
+  for (let i = 0; i < enemyCount; i++) {
+    const room = rooms[rng(1, rooms.length - 1)];
+    const ex = room.x + rng(0, room.w - 1);
+    const ey = room.y + rng(0, room.h - 1);
+    if (game.map[ey][ex] === TILE_FLOOR && !getEnemyAt(ex, ey) &&
+        !(ex === game.player.x && ey === game.player.y)) {
+      game.enemies.push(createEnemy(ex, ey, floorNum, false));
+    }
+  }
+
+  // Boss on last floor
+  if (isBossFloor) {
+    const bossRoom = rooms[Math.floor(rooms.length / 2)];
+    const bx = bossRoom.x + Math.floor(bossRoom.w/2);
+    const by = bossRoom.y + Math.floor(bossRoom.h/2);
+    game.map[by][bx] = TILE_FLOOR;
+    game.enemies.push(createEnemy(bx, by, floorNum, true));
+  }
+
+  // Place chests
+  const chestCount = 2 + Math.floor(floorNum / 2);
+  for (let i = 0; i < chestCount; i++) {
+    const room = rooms[rng(1, rooms.length - 1)];
+    const cx2 = room.x + rng(0, room.w - 1);
+    const cy2 = room.y + rng(0, room.h - 1);
+    if (game.map[cy2][cx2] === TILE_FLOOR && !getEnemyAt(cx2, cy2)) {
+      game.map[cy2][cx2] = TILE_CHEST;
+    }
+  }
+
+  // Place shop (floor 2+)
+  if (floorNum >= 2 && rooms.length > 3) {
+    const shopRoom = rooms[rng(1, rooms.length - 2)];
+    game.map[shopRoom.y + 1][shopRoom.x + 1] = TILE_SHOP;
+  }
+
+  updateFog();
+  updateSidePanel();
+}
+
+function rectsOverlap(a, b, padding) {
+  return !(a.x + a.w + padding <= b.x || b.x + b.w + padding <= a.x ||
+           a.y + a.h + padding <= b.y || b.y + b.h + padding <= a.y);
+}
+
+// ============================================================
+//  ENEMIES
+// ============================================================
+const ENEMY_TYPES = [
+  { name:'Goblin',     emoji:'👺', hp:12, atk:4,  def:1, xp:8,  gold:[2,6],  desc:'A sneaky little pest.' },
+  { name:'Skeleton',   emoji:'💀', hp:16, atk:6,  def:2, xp:12, gold:[3,8],  desc:'Rattling bones.' },
+  { name:'Orc',        emoji:'👹', hp:24, atk:9,  def:4, xp:20, gold:[5,12], desc:'Big and mean.' },
+  { name:'Troll',      emoji:'🧌', hp:36, atk:11, def:6, xp:30, gold:[8,18], desc:'Regenerates health.' },
+  { name:'Vampire',    emoji:'🧛', hp:28, atk:13, def:5, xp:35, gold:[10,20],desc:'Drains your life.' },
+  { name:'Witch',      emoji:'🧙‍♀️',hp:22, atk:15, def:3, xp:40, gold:[12,25],desc:'Casts deadly spells.' },
+  { name:'Dragon',     emoji:'🐲', hp:80, atk:18, def:10,xp:100,gold:[30,60],desc:'A fearsome dragon.',boss:true },
+  { name:'Lich King',  emoji:'☠️', hp:60, atk:20, def:8, xp:80, gold:[25,50],desc:'Master of undeath.', boss:true },
+  { name:'Ancient Dragon',emoji:'🐉',hp:120,atk:25,def:15,xp:250,gold:[80,150],desc:'The final boss!',boss:true,final:true },
+];
+
+function createEnemy(x, y, floor, isBoss) {
+  let typePool;
+  if (isBoss && floor >= game.maxFloors) {
+    typePool = ENEMY_TYPES.filter(e => e.final);
+  } else if (isBoss) {
+    typePool = ENEMY_TYPES.filter(e => e.boss && !e.final);
+  } else {
+    // Scale enemy pool by floor
+    const maxIdx = Math.min(3 + Math.floor(floor * 0.8), ENEMY_TYPES.filter(e=>!e.boss).length - 1);
+    typePool = ENEMY_TYPES.filter(e=>!e.boss).slice(0, maxIdx + 1);
+  }
+  const type = typePool[rng(0, typePool.length - 1)];
+  const scale = 1 + (floor - 1) * 0.15;
+  return {
+    x, y,
+    name: type.name,
+    emoji: type.emoji,
+    hp: Math.round(type.hp * scale),
+    maxHp: Math.round(type.hp * scale),
+    atk: Math.round(type.atk * scale),
+    def: Math.round(type.def * scale),
+    xp: type.xp,
+    goldRange: type.gold,
+    boss: !!type.boss,
+    final: !!type.final,
+    special: type.name === 'Troll' ? 'regen' : type.name === 'Vampire' ? 'drain' : null,
+    alive: true,
+    id: Math.random(),
+  };
+}
+
+function getEnemyAt(x, y) {
+  return game.enemies.find(e => e.alive && e.x === x && e.y === y);
+}
+
+// ============================================================
+//  FOG OF WAR
+// ============================================================
+function updateFog() {
+  const p = game.player;
+  const viewRadius = 6;
+  for (let dy = -viewRadius; dy <= viewRadius; dy++) {
+    for (let dx = -viewRadius; dx <= viewRadius; dx++) {
+      const nx = p.x + dx, ny = p.y + dy;
+      if (nx >= 0 && nx < COLS && ny >= 0 && ny < ROWS) {
+        if (Math.sqrt(dx*dx + dy*dy) <= viewRadius) {
+          game.fog[ny][nx] = false;
+        }
+      }
+    }
+  }
+}
+
+// ============================================================
+//  RENDERING
+// ============================================================
+let canvas, ctx;
+function render() {
+  if (!canvas) {
+    canvas = document.getElementById('dungeon-canvas');
+    ctx = canvas.getContext('2d');
+  }
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Camera (center on player)
+  const camX = Math.max(0, Math.min(game.player.x - Math.floor(canvas.width/TILE/2), COLS - Math.floor(canvas.width/TILE)));
+  const camY = Math.max(0, Math.min(game.player.y - Math.floor(canvas.height/TILE/2), ROWS - Math.floor(canvas.height/TILE)));
+
+  const visW = Math.floor(canvas.width / TILE);
+  const visH = Math.floor(canvas.height / TILE);
+
+  for (let row = camY; row < camY + visH + 1 && row < ROWS; row++) {
+    for (let col = camX; col < camX + visW + 1 && col < COLS; col++) {
+      const px = (col - camX) * TILE;
+      const py = (row - camY) * TILE;
+      const tile = game.map[row][col];
+      const inFog = game.fog[row][col];
+      const hasSeen = !inFog; // once seen, always drawn dimly
+
+      // Base tile color
+      let bg = '#000';
+      if (tile === TILE_WALL) bg = COLORS.wall;
+      else if (tile === TILE_FLOOR || tile === TILE_TRAP) bg = (col+row)%2===0 ? COLORS.floor : COLORS.floorAlt;
+      else if (tile === TILE_DOOR) bg = COLORS.door;
+      else if (tile === TILE_CHEST) bg = COLORS.floor;
+      else if (tile === TILE_SHOP) bg = COLORS.floor;
+      else if (tile === TILE_STAIRS) bg = COLORS.floor;
+
+      ctx.fillStyle = bg;
+      ctx.fillRect(px, py, TILE, TILE);
+
+      if (!inFog) {
+        // Draw tile details
+        if (tile === TILE_WALL) {
+          ctx.strokeStyle = COLORS.wallEdge;
+          ctx.lineWidth = 1;
+          ctx.strokeRect(px+0.5, py+0.5, TILE-1, TILE-1);
+          // Wall texture
+          ctx.fillStyle = '#3a2510';
+          ctx.fillRect(px+2, py+2, 4, 4);
+          ctx.fillRect(px+TILE-7, py+TILE-7, 4, 4);
+        } else if (tile === TILE_FLOOR || tile === TILE_TRAP) {
+          // Floor dot
+          ctx.fillStyle = tile===TILE_TRAP ? '#331100' : '#151008';
+          ctx.fillRect(px+TILE/2-1, py+TILE/2-1, 2, 2);
+          if (tile === TILE_TRAP) {
+            drawEmoji(ctx, '⚠', px + TILE/2, py + TILE/2, TILE * 0.55);
+          }
+        } else if (tile === TILE_CHEST) {
+          drawEmoji(ctx, '📦', px + TILE/2, py + TILE/2, TILE * 0.7);
+        } else if (tile === TILE_SHOP) {
+          drawEmoji(ctx, '🏪', px + TILE/2, py + TILE/2, TILE * 0.7);
+        } else if (tile === TILE_STAIRS) {
+          ctx.fillStyle = '#001a33';
+          ctx.fillRect(px+2, py+2, TILE-4, TILE-4);
+          drawEmoji(ctx, '🚪', px + TILE/2, py + TILE/2, TILE * 0.7);
+        }
+      }
+    }
+  }
+
+  // Draw enemies (only if visible)
+  game.enemies.filter(e => e.alive).forEach(e => {
+    if (game.fog[e.y][e.x]) return;
+    const px = (e.x - camX) * TILE;
+    const py = (e.y - camY) * TILE;
+    if (e.boss) {
+      ctx.fillStyle = 'rgba(80,0,80,0.3)';
+      ctx.fillRect(px, py, TILE, TILE);
+    }
+    drawEmoji(ctx, e.emoji, px + TILE/2, py + TILE/2, e.boss ? TILE * 0.85 : TILE * 0.7);
+    // HP bar above enemy
+    const hpPct = e.hp / e.maxHp;
+    ctx.fillStyle = '#330000';
+    ctx.fillRect(px+1, py-4, TILE-2, 3);
+    ctx.fillStyle = hpPct > 0.5 ? '#00bb44' : hpPct > 0.25 ? '#ffaa00' : '#ff3300';
+    ctx.fillRect(px+1, py-4, Math.round((TILE-2)*hpPct), 3);
+  });
+
+  // Draw player
+  const ppx = (game.player.x - camX) * TILE;
+  const ppy = (game.player.y - camY) * TILE;
+  // Player glow
+  const grad = ctx.createRadialGradient(ppx+TILE/2, ppy+TILE/2, 2, ppx+TILE/2, ppy+TILE/2, TILE);
+  grad.addColorStop(0, 'rgba(255,200,50,0.3)');
+  grad.addColorStop(1, 'rgba(255,200,50,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(ppx-TILE, ppy-TILE, TILE*3, TILE*3);
+  const playerSprite = (CLASSES[game.classId] || CLASSES.warrior).sprite;
+  drawEmoji(ctx, playerSprite, ppx + TILE/2, ppy + TILE/2, TILE * 0.75);
+}
+
+function drawEmoji(ctx, emoji, cx, cy, size) {
+  ctx.font = `${size}px serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(emoji, cx, cy);
+}
+
+// ============================================================
+//  PLAYER MOVEMENT & INTERACTION
+// ============================================================
+document.addEventListener('keydown', e => {
+  if (game.state !== 'dungeon') return;
+  let dx = 0, dy = 0;
+  if (e.key === 'ArrowUp')    dy = -1;
+  if (e.key === 'ArrowDown')  dy =  1;
+  if (e.key === 'ArrowLeft')  dx = -1;
+  if (e.key === 'ArrowRight') dx =  1;
+  if (e.key === 'e' || e.key === 'E') { interact(); return; }
+  if (e.key === 'i' || e.key === 'I') { showInventory(); return; }
+  if (dx !== 0 || dy !== 0) {
+    e.preventDefault();
+    movePlayer(dx, dy);
+  }
+});
+
+function movePlayer(dx, dy) {
+  const nx = game.player.x + dx;
+  const ny = game.player.y + dy;
+  if (nx < 0 || nx >= COLS || ny < 0 || ny >= ROWS) return;
+
+  const tile = game.map[ny][nx];
+  if (tile === TILE_WALL) return;
+
+  // Check for enemy
+  const enemy = getEnemyAt(nx, ny);
+  if (enemy) {
+    startCombat(enemy);
+    return;
+  }
+
+  // Move
+  game.player.x = nx;
+  game.player.y = ny;
+
+  // Tile interactions
+  if (tile === TILE_CHEST) {
+    openChest(nx, ny);
+  } else if (tile === TILE_SHOP) {
+    openShop();
+    return;
+  } else if (tile === TILE_STAIRS) {
+    if (game.floorCleared || game.floor >= game.maxFloors) {
+      advanceFloor();
+    } else {
+      addLog(`The door is blocked! Defeat all enemies first. (${game.enemies.filter(e=>e.alive).length} remain)`, 'system');
+    }
+    return;
+  } else if (tile === TILE_TRAP) {
+    const dmg = rng(3, 8 + game.floor * 2);
+    game.player.hp = Math.max(1, game.player.hp - dmg);
+    addLog(`You triggered a trap! Took ${dmg} damage!`, 'damage');
+    game.map[ny][nx] = TILE_FLOOR; // disarm
+  }
+
+  updateFog();
+  checkFloorCleared();
+  updateHUD();
+  render();
+}
+
+function interact() {
+  const p = game.player;
+  const dirs = [[0,0],[0,-1],[0,1],[-1,0],[1,0]];
+  for (const [dx,dy] of dirs) {
+    const nx = p.x+dx, ny = p.y+dy;
+    if (nx<0||nx>=COLS||ny<0||ny>=ROWS) continue;
+    const tile = game.map[ny][nx];
+    if (tile === TILE_CHEST) { openChest(nx,ny); return; }
+    if (tile === TILE_SHOP)  { openShop(); return; }
+    if (tile === TILE_STAIRS) {
+      if (game.floorCleared) advanceFloor();
+      else addLog(`Defeat all enemies first! (${game.enemies.filter(e=>e.alive).length} remain)`, 'system');
+      return;
+    }
+  }
+  addLog('Nothing to interact with nearby.', 'system');
+}
+
+function checkFloorCleared() {
+  const alive = game.enemies.filter(e => e.alive).length;
+  if (alive === 0 && !game.floorCleared) {
+    game.floorCleared = true;
+    addLog('All enemies defeated! The stairs are now open.', 'info');
+    updateSidePanel();
+  }
+}
+
+function openChest(x, y) {
+  game.map[y][x] = TILE_FLOOR;
+  const roll = Math.random();
+  const floorMult = game.floor;
+  if (roll < 0.4) {
+    // Gold
+    const gold = rng(5, 15 * floorMult);
+    game.player.gold += gold;
+    addLog(`Opened chest: Found ${gold} gold! 💰`, 'gold');
+  } else if (roll < 0.7) {
+    // Potion
+    const count = rng(1, 2);
+    game.player.potions += count;
+    addLog(`Opened chest: Found ${count} health potion(s)! 🧪`, 'heal');
+  } else {
+    // Item
+    const item = generateItem(game.floor);
+    applyItem(item, 'loot');
+  }
+  updateHUD();
+  render();
+}
+
+function advanceFloor() {
+  if (game.floor >= game.maxFloors) {
+    // Game won after defeating final boss (should be triggered by boss kill)
+    gameWin();
+    return;
+  }
+  const nextFloor = game.floor + 1;
+  addLog(`━━━ Descending to Floor ${nextFloor}... ━━━`, 'info');
+  // Small heal between floors
+  const healAmt = Math.round(game.player.maxHp * 0.25);
+  game.player.hp = Math.min(game.player.maxHp, game.player.hp + healAmt);
+  addLog(`You rest briefly and recover ${healAmt} HP.`, 'heal');
+  generateFloor(nextFloor);
+  updateHUD();
+  render();
+  document.getElementById('floor-indicator').textContent =
+    `FLOOR ${nextFloor} — ${FLOOR_NAMES[nextFloor] || 'THE DEEP'}`;
+}
+
+const FLOOR_NAMES = {
+  1: 'THE ENTRANCE',
+  2: 'THE CATACOMBS',
+  3: 'THE DARK HALLS',
+  4: 'THE ABYSS',
+  5: 'THE DRAGON\'S LAIR',
+  6: 'THE FINAL CHAMBER',
+};
+
+// ============================================================
+//  COMBAT
+// ============================================================
+function startCombat(enemy) {
+  game.state = 'combat';
+  game.currentEnemy = enemy;
+  // Init enemy status fields
+  enemy.atkDebuffMult = 1;
+  enemy.atkDebuffTurns = 0;
+  enemy.poisonTurns = 0;
+  enemy.poisonDmg = 0;
+  showScreen('combat');
+
+  const cls = CLASSES[game.classId] || CLASSES.warrior;
+  document.getElementById('player-sprite').textContent = cls.sprite;
+  document.getElementById('player-combat-name').textContent = `${cls.name} (Lv.${game.player.level})`;
+  document.getElementById('enemy-sprite').textContent = enemy.emoji;
+  document.getElementById('enemy-name').textContent = enemy.name + (enemy.boss ? ' 👑' : '');
+
+  // Set up skill buttons
+  const s1 = cls.skills[0], s2 = cls.skills[1];
+  const btn1 = document.getElementById('skill1-btn');
+  const btn2 = document.getElementById('skill2-btn');
+  btn1.innerHTML = `${s1.emoji} ${s1.name}`;
+  btn2.innerHTML = `${s2.emoji} ${s2.name}`;
+
+  updateCombatUI();
+  clearCombatLog();
+  combatLog(`⚔ Battle begins! ${enemy.name} attacks!`, 'damage');
+  if (enemy.boss) {
+    combatLog(`🔥 A ${enemy.boss && enemy.final ? 'FINAL BOSS' : 'BOSS'} appears! Prepare yourself!`, 'boss');
+    combatLog(`💡 Use your skills ${s1.emoji} ${s1.name} and ${s2.emoji} ${s2.name} wisely!`, 'info');
+  }
+}
+
+function updateCombatUI() {
+  const p = game.player;
+  const e = game.currentEnemy;
+  document.getElementById('player-combat-hp').textContent = `${p.hp}/${p.maxHp}`;
+  document.getElementById('player-combat-bar').style.width = `${(p.hp/p.maxHp)*100}%`;
+  document.getElementById('enemy-combat-hp').textContent = `${Math.max(0,e.hp)}/${e.maxHp}`;
+  document.getElementById('enemy-combat-bar').style.width = `${Math.max(0,(e.hp/e.maxHp)*100)}%`;
+
+  // Potion count
+  const pc = document.getElementById('potion-count');
+  if (pc) pc.textContent = p.potions;
+
+  // Skill cooldown badges
+  updateSkillButton('skill1-btn', p.skill1CD);
+  updateSkillButton('skill2-btn', p.skill2CD);
+
+  // Status bar
+  let statusParts = [];
+  if (p.atkBuffTurns > 0)   statusParts.push(`<span class="buff-tag">⚔ ATK×${p.atkBuffMult} (${p.atkBuffTurns}t)</span>`);
+  if (p.shielded)           statusParts.push(`<span class="buff-tag">🌀 Shielded</span>`);
+  if (e.atkDebuffTurns > 0) statusParts.push(`<span class="debuff-tag">${e.name} ⬇ATK (${e.atkDebuffTurns}t)</span>`);
+  if (e.poisonTurns > 0)    statusParts.push(`<span class="debuff-tag">${e.name} ☠ Poisoned (${e.poisonTurns}t)</span>`);
+  const sb = document.getElementById('status-bar');
+  if (sb) sb.innerHTML = statusParts.join('');
+}
+
+function updateSkillButton(btnId, cd) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  // Remove old badge
+  const old = btn.querySelector('.skill-cd-badge');
+  if (old) old.remove();
+  if (cd > 0) {
+    btn.classList.add('on-cd');
+    const badge = document.createElement('span');
+    badge.className = 'skill-cd-badge';
+    badge.textContent = cd;
+    btn.appendChild(badge);
+  } else {
+    btn.classList.remove('on-cd');
+  }
+}
+
+function combatLog(msg, type='') {
+  const div = document.getElementById('combat-log');
+  const entry = document.createElement('div');
+  entry.className = `log-entry ${type}`;
+  entry.textContent = msg;
+  div.appendChild(entry);
+  div.scrollTop = div.scrollHeight;
+}
+
+function clearCombatLog() {
+  document.getElementById('combat-log').innerHTML = '';
+}
+
+function combatAction(action) {
+  const p = game.player;
+  const e = game.currentEnemy;
+  if (!e || !e.alive) return;
+
+  let playerDmg = 0;
+
+  const effAtk = Math.round(p.atk * (p.atkBuffMult || 1));
+
+  if (action === 'attack') {
+    playerDmg = Math.max(1, effAtk - e.def + rng(-2, 4));
+    e.hp -= playerDmg;
+    combatLog(`You strike ${e.name} for ${playerDmg} damage!`, 'damage');
+    shakeEnemy();
+  } else if (action === 'heavy') {
+    if (Math.random() < 0.3) {
+      combatLog(`Heavy Strike MISSED!`, 'system');
+    } else {
+      playerDmg = Math.max(1, Math.round(effAtk * 1.8) - e.def + rng(-1, 3));
+      e.hp -= playerDmg;
+      combatLog(`💥 Heavy Strike hits ${e.name} for ${playerDmg} damage!`, 'damage');
+      shakeEnemy();
+    }
+  } else if (action === 'skill1' || action === 'skill2') {
+    const skillIdx = action === 'skill1' ? 0 : 1;
+    const cls = CLASSES[game.classId] || CLASSES.warrior;
+    const skill = cls.skills[skillIdx];
+    const cdKey = action === 'skill1' ? 'skill1CD' : 'skill2CD';
+    if (p[cdKey] > 0) {
+      combatLog(`${skill.name} is on cooldown! (${p[cdKey]} turns left)`, 'system');
+      return;
+    }
+    executeSkill(skill.id, p, e);
+    p[cdKey] = skill.cdMax;
+    if (checkCombatEnd()) return;
+    if (tickTurnEffects()) { checkCombatEnd(); return; }
+    enemyAttack();
+    if (checkCombatEnd()) return;
+    updateCombatUI();
+    return;
+  } else if (action === 'potion') {
+    if (p.potions <= 0) {
+      combatLog(`No potions left!`, 'system');
+      return;
+    }
+    p.potions--;
+    const heal = rng(15, 30 + p.level * 3);
+    p.hp = Math.min(p.maxHp, p.hp + heal);
+    combatLog(`🧪 You drink a potion and recover ${heal} HP!`, 'heal');
+    updateCombatUI();
+    // Enemy still attacks
+    enemyAttack();
+    if (checkCombatEnd()) return;
+    updateCombatUI();
+    return;
+  } else if (action === 'flee') {
+    if (e.boss) {
+      combatLog(`You can't flee from a boss!`, 'system');
+      return;
+    }
+    if (Math.random() < 0.5) {
+      combatLog(`You fled successfully!`, 'system');
+      addLog(`You fled from the ${e.name}.`, 'system');
+      game.state = 'dungeon';
+      showScreen('dungeon');
+      // Move player back a step
+      updateHUD();
+      render();
+      return;
+    } else {
+      combatLog(`Escape failed! The ${e.name} blocks your way!`, 'system');
+    }
+  }
+
+  if (checkCombatEnd()) return;
+
+  if (tickTurnEffects()) { checkCombatEnd(); return; }
+  // Enemy turn
+  enemyAttack();
+  if (checkCombatEnd()) return;
+
+  updateCombatUI();
+}
+
+function enemyAttack() {
+  const p = game.player;
+  const e = game.currentEnemy;
+
+  // Mana Shield blocks entirely
+  if (p.shielded) {
+    p.shielded = false;
+    combatLog(`🌀 Mana Shield absorbed ${e.name}'s attack!`, 'heal');
+    shakePlayer();
+    return;
+  }
+
+  const effEnemyAtk = Math.round(e.atk * (e.atkDebuffMult || 1));
+  let dmg = Math.max(1, effEnemyAtk - p.def + rng(-2, 4));
+
+  // Special abilities
+  if (e.special === 'regen') {
+    const regen = rng(2, 5);
+    e.hp = Math.min(e.maxHp, e.hp + regen);
+    combatLog(`🌿 ${e.name} regenerates ${regen} HP!`, 'heal');
+  } else if (e.special === 'drain') {
+    const drain = Math.round(dmg * 0.3);
+    e.hp = Math.min(e.maxHp, e.hp + drain);
+    combatLog(`🩸 ${e.name} drains ${drain} HP!`, 'damage');
+  }
+
+  // Boss uses special attack occasionally
+  if (e.boss && Math.random() < 0.3) {
+    dmg = Math.round(dmg * 1.5);
+    combatLog(`🔥 ${e.name} uses a DEVASTATING attack for ${dmg} damage!`, 'boss');
+  } else {
+    combatLog(`${e.name} attacks you for ${dmg} damage!`, 'damage');
+  }
+
+  p.hp -= dmg;
+  shakePlayer();
+}
+
+function executeSkill(skillId, p, e) {
+  const effAtk = Math.round(p.atk * (p.atkBuffMult || 1));
+  switch (skillId) {
+    case 'shield_bash': {
+      const dmg = Math.max(1, Math.round(effAtk * 0.8) - e.def + rng(-1, 2));
+      e.hp -= dmg;
+      e.atkDebuffMult = 0.65;
+      e.atkDebuffTurns = 2;
+      combatLog(`🛡 Shield Bash! Hit ${e.name} for ${dmg} dmg and weakened their ATK for 2 turns!`, 'damage');
+      shakeEnemy();
+      break;
+    }
+    case 'war_cry': {
+      p.atkBuffMult = 1.5;
+      p.atkBuffTurns = 2;
+      combatLog(`💢 WAR CRY! Your ATK is boosted ×1.5 for 2 turns!`, 'info');
+      break;
+    }
+    case 'fireball': {
+      const dmg = Math.max(1, Math.round(effAtk * 2.5) - Math.floor(e.def * 0.4) + rng(-1, 3));
+      e.hp -= dmg;
+      combatLog(`🔥 FIREBALL! Magical blast hits ${e.name} for ${dmg} damage (ignores 60% DEF)!`, 'boss');
+      shakeEnemy();
+      break;
+    }
+    case 'mana_shield': {
+      p.shielded = true;
+      combatLog(`🌀 Mana Shield raised! The next enemy attack will be completely absorbed!`, 'heal');
+      break;
+    }
+    case 'backstab': {
+      const dmg = Math.max(1, Math.round(effAtk * 3) + rng(0, 5));
+      e.hp -= dmg;
+      combatLog(`🗡 BACKSTAB! Critical hit — ${e.name} takes ${dmg} damage!`, 'boss');
+      shakeEnemy();
+      break;
+    }
+    case 'poison': {
+      e.poisonDmg = 5 + Math.floor(p.level * 0.8);
+      e.poisonTurns = 3;
+      combatLog(`☠ Poison Blade! ${e.name} is poisoned! (${e.poisonDmg} dmg/turn × 3 turns)`, 'damage');
+      break;
+    }
+  }
+}
+
+function tickTurnEffects() {
+  const p = game.player;
+  const e = game.currentEnemy;
+  // Player buffs
+  if (p.atkBuffTurns > 0) {
+    p.atkBuffTurns--;
+    if (p.atkBuffTurns === 0) { p.atkBuffMult = 1; combatLog(`War Cry fades. ATK returns to normal.`, 'system'); }
+  }
+  // Skill cooldowns
+  if (p.skill1CD > 0) p.skill1CD--;
+  if (p.skill2CD > 0) p.skill2CD--;
+  // Enemy debuffs
+  if (e.atkDebuffTurns > 0) {
+    e.atkDebuffTurns--;
+    if (e.atkDebuffTurns === 0) { e.atkDebuffMult = 1; combatLog(`${e.name}'s ATK recovers.`, 'system'); }
+  }
+  // Poison tick
+  if (e.poisonTurns > 0) {
+    e.hp -= e.poisonDmg;
+    e.poisonTurns--;
+    combatLog(`☠ ${e.name} suffers ${e.poisonDmg} poison damage! (${e.poisonTurns} turns left)`, 'damage');
+    if (e.hp <= 0) return true; // enemy died from poison
+  }
+  return false;
+}
+
+function checkCombatEnd() {
+  const p = game.player;
+  const e = game.currentEnemy;
+  updateCombatUI();
+
+  if (e.hp <= 0) {
+    e.alive = false;
+    e.hp = 0;
+    combatLog(`✨ ${e.name} is defeated!`, 'heal');
+
+    // XP gain
+    p.xp += e.xp;
+    combatLog(`Gained ${e.xp} XP!`, 'info');
+    addLog(`Defeated ${e.name}! +${e.xp} XP`, 'info');
+
+    // Gold drop
+    const gold = rng(e.goldRange[0], e.goldRange[1]);
+    p.gold += gold;
+    combatLog(`Found ${gold} gold! 💰`, 'gold');
+    addLog(`+${gold} gold`, 'gold');
+
+    p.kills++;
+
+    // Level up check
+    checkLevelUp();
+
+    // Drop item chance
+    const dropChance = e.boss ? 1.0 : 0.3;
+    if (Math.random() < dropChance) {
+      setTimeout(() => {
+        const item = generateItem(game.floor + (e.boss ? 2 : 0));
+        applyItem(item, 'drop');
+      }, 600);
+    }
+
+    setTimeout(() => {
+      game.state = 'dungeon';
+      showScreen('dungeon');
+      checkFloorCleared();
+      updateHUD();
+      render();
+
+      // Final boss = win
+      if (e.final) {
+        setTimeout(() => gameWin(), 500);
+      }
+    }, 1200);
+    return true;
+  }
+
+  if (p.hp <= 0) {
+    p.hp = 0;
+    combatLog(`💀 You have been slain...`, 'boss');
+    setTimeout(() => gameDead(), 1500);
+    return true;
+  }
+  return false;
+}
+
+function shakeEnemy() {
+  const el = document.getElementById('enemy-combatant');
+  el.classList.remove('shake');
+  void el.offsetWidth;
+  el.classList.add('shake');
+}
+
+function shakePlayer() {
+  const el = document.getElementById('player-combatant');
+  el.classList.remove('hit-flash');
+  void el.offsetWidth;
+  el.classList.add('hit-flash');
+}
+
+// ============================================================
+//  ITEMS & INVENTORY
+// ============================================================
+const WEAPONS = [
+  { name:'Wooden Sword',  emoji:'🗡',  atk:3,  desc:'A basic sword.',    tier:1 },
+  { name:'Iron Sword',    emoji:'⚔',   atk:7,  desc:'Reliable iron.',     tier:2 },
+  { name:'Battle Axe',    emoji:'🪓',  atk:11, desc:'Heavy axe.',         tier:3 },
+  { name:'Flaming Sword', emoji:'🔥',  atk:16, desc:'Engulfed in flame.', tier:4 },
+  { name:'Legendary Blade',emoji:'⚡', atk:22, desc:'Forged by gods.',    tier:5 },
+];
+
+const ARMORS = [
+  { name:'Leather Armor', emoji:'🧥',  def:3,  desc:'Basic protection.',  tier:1 },
+  { name:'Chain Mail',    emoji:'🛡',   def:7,  desc:'Interlocked rings.', tier:2 },
+  { name:'Iron Armor',    emoji:'🦺',  def:12, desc:'Heavy iron plates.', tier:3 },
+  { name:'Dragon Scale',  emoji:'🐉',  def:18, desc:'Scales of a dragon.',tier:4 },
+  { name:'Celestial Plate',emoji:'✨', def:25, desc:'Divine protection.', tier:5 },
+];
+
+const CONSUMABLES = [
+  { name:'Health Potion',   emoji:'🧪', type:'potion',    amount:1, desc:'+1 Potion', price: 20 },
+  { name:'Mega Potion',     emoji:'💊', type:'mega_potion',amount:3, desc:'+3 Potions',price: 50 },
+  { name:'Strength Draught',emoji:'💪', type:'str_boost', amount:3, desc:'+3 ATK perm.',price: 60 },
+  { name:'Iron Skin Tonic', emoji:'🦾', type:'def_boost', amount:3, desc:'+3 DEF perm.',price: 60 },
+  { name:'Life Crystal',    emoji:'💎', type:'hp_boost',  amount:15,desc:'+15 Max HP',  price: 80 },
+];
+
+function generateItem(floor) {
+  const tier = Math.min(5, Math.ceil(floor / 1.2));
+  if (Math.random() < 0.5) {
+    return { ...WEAPONS[Math.min(tier-1, WEAPONS.length-1)], type:'weapon', price: tier*30 };
+  } else {
+    return { ...ARMORS[Math.min(tier-1, ARMORS.length-1)], type:'armor', price: tier*28 };
+  }
+}
+
+function applyItem(item, source) {
+  const p = game.player;
+  if (item.type === 'weapon') {
+    const old = p.weapon ? p.weapon.name : 'Fists';
+    if (!p.weapon || item.atk > p.weapon.atk) {
+      p.weapon = item;
+      p.atk = 8 + item.atk + (p.level - 1) * 2;
+      addLog(`${source==='drop'?'Enemy dropped':'Found'}: ${item.emoji} ${item.name}! ATK +${item.atk} (replaced ${old})`, 'info');
+    } else {
+      addLog(`Found ${item.name} but your current weapon is better.`, 'system');
+    }
+  } else if (item.type === 'armor') {
+    const old = p.armor ? p.armor.name : 'Rags';
+    if (!p.armor || item.def > p.armor.def) {
+      p.armor = item;
+      p.def = 3 + item.def + (p.level - 1);
+      addLog(`${source==='drop'?'Enemy dropped':'Found'}: ${item.emoji} ${item.name}! DEF +${item.def} (replaced ${old})`, 'info');
+    } else {
+      addLog(`Found ${item.name} but your current armor is better.`, 'system');
+    }
+  } else if (item.type === 'potion') {
+    p.potions += item.amount;
+    addLog(`Got ${item.amount} potion(s)!`, 'heal');
+  } else if (item.type === 'mega_potion') {
+    p.potions += item.amount;
+    addLog(`Got ${item.amount} potions!`, 'heal');
+  } else if (item.type === 'str_boost') {
+    p.atk += item.amount;
+    addLog(`Drank Strength Draught! ATK +${item.amount}`, 'info');
+  } else if (item.type === 'def_boost') {
+    p.def += item.amount;
+    addLog(`Drank Iron Skin Tonic! DEF +${item.amount}`, 'info');
+  } else if (item.type === 'hp_boost') {
+    p.maxHp += item.amount;
+    p.hp = Math.min(p.maxHp, p.hp + item.amount);
+    addLog(`Used Life Crystal! Max HP +${item.amount}`, 'heal');
+  }
+  updateHUD();
+  updateSidePanel();
+}
+
+// ============================================================
+//  INVENTORY UI
+// ============================================================
+function showInventory() {
+  if (game.state === 'combat') return;
+  game.state = 'inventory';
+  showScreen('overlay');
+  document.getElementById('overlay-title').textContent = '🎒 INVENTORY';
+  const p = game.player;
+  let html = '<div class="item-grid">';
+
+  // Weapon slot
+  html += `<div class="item-card ${p.weapon?'equipped':''}">
+    <div class="item-icon">${p.weapon ? p.weapon.emoji : '✊'}</div>
+    <div class="item-name">${p.weapon ? p.weapon.name : 'Bare Fists'}</div>
+    <div class="item-desc">${p.weapon ? p.weapon.desc : 'Your bare hands.'}</div>
+    <div class="item-stat">ATK: ${p.atk}</div>
+    ${p.weapon ? '<div class="item-tag">WEAPON</div>' : ''}
+  </div>`;
+
+  // Armor slot
+  html += `<div class="item-card ${p.armor?'equipped':''}">
+    <div class="item-icon">${p.armor ? p.armor.emoji : '👕'}</div>
+    <div class="item-name">${p.armor ? p.armor.name : 'Tattered Rags'}</div>
+    <div class="item-desc">${p.armor ? p.armor.desc : 'Barely counts as armor.'}</div>
+    <div class="item-stat">DEF: ${p.def}</div>
+    ${p.armor ? '<div class="item-tag">ARMOR</div>' : ''}
+  </div>`;
+
+  // Potions
+  html += `<div class="item-card">
+    <div class="item-icon">🧪</div>
+    <div class="item-name">Health Potions</div>
+    <div class="item-desc">Restores 15-30 HP in combat.</div>
+    <div class="item-stat">x${p.potions}</div>
+  </div>`;
+
+  html += '</div>';
+
+  // Stats summary
+  html += `<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; font-size:0.85em;">
+    <div style="border:1px solid #3a2008; padding:8px;">
+      <div class="panel-title">📊 STATS</div>
+      <div class="stat-row"><span class="stat-name">Level</span><span class="stat-val">${p.level}</span></div>
+      <div class="stat-row"><span class="stat-name">HP</span><span class="stat-val">${p.hp}/${p.maxHp}</span></div>
+      <div class="stat-row"><span class="stat-name">ATK</span><span class="stat-val">${p.atk}</span></div>
+      <div class="stat-row"><span class="stat-name">DEF</span><span class="stat-val">${p.def}</span></div>
+    </div>
+    <div style="border:1px solid #3a2008; padding:8px;">
+      <div class="panel-title">📈 PROGRESS</div>
+      <div class="stat-row"><span class="stat-name">XP</span><span class="stat-val">${p.xp}/${p.xpNext}</span></div>
+      <div class="stat-row"><span class="stat-name">Gold</span><span class="stat-val good">💰 ${p.gold}</span></div>
+      <div class="stat-row"><span class="stat-name">Kills</span><span class="stat-val">${p.kills}</span></div>
+      <div class="stat-row"><span class="stat-name">Floor</span><span class="stat-val warn">${p.floor}</span></div>
+    </div>
+  </div>`;
+
+  document.getElementById('overlay-content').innerHTML = html;
+}
+
+// ============================================================
+//  SHOP
+// ============================================================
+function openShop() {
+  if (game.state === 'combat') return;
+  game.state = 'shop';
+  showScreen('overlay');
+  document.getElementById('overlay-title').textContent = '🏪 MERCHANT\'S SHOP';
+  renderShop();
+}
+
+function renderShop() {
+  const p = game.player;
+  // Pick 4-5 random items for sale
+  const forSale = [];
+  const wIdx = Math.min(game.floor - 1, WEAPONS.length - 1);
+  const aIdx = Math.min(game.floor - 1, ARMORS.length - 1);
+  if (wIdx >= 0) forSale.push({...WEAPONS[wIdx], type:'weapon', price: (wIdx+1)*35 });
+  if (aIdx >= 0) forSale.push({...ARMORS[aIdx], type:'armor', price: (aIdx+1)*32 });
+  forSale.push(...CONSUMABLES.slice(0, 3));
+
+  let html = `<div style="color:#888; font-size:0.85em; margin-bottom:10px; text-align:center;">
+    Your gold: <span style="color:#ffd700">💰 ${p.gold}</span> &nbsp;|&nbsp; Click an item to purchase
+  </div>`;
+  html += '<div class="item-grid">';
+
+  forSale.forEach((item, idx) => {
+    const canAfford = p.gold >= item.price;
+    const statLine = item.atk ? `ATK +${item.atk}` : item.def ? `DEF +${item.def}` : item.desc;
+    html += `<div class="item-card" onclick="buyItem(${idx})" style="${canAfford?'':'opacity:0.5; cursor:not-allowed'}">
+      <div class="item-icon">${item.emoji}</div>
+      <div class="item-name">${item.name}</div>
+      <div class="item-desc">${item.desc}</div>
+      <div class="item-stat">${statLine}</div>
+      <div class="item-cost">💰 ${item.price}</div>
+    </div>`;
+  });
+  html += '</div>';
+  document.getElementById('overlay-content').innerHTML = html;
+  // Store items for purchase
+  window._shopItems = forSale;
+}
+
+function buyItem(idx) {
+  const p = game.player;
+  const item = window._shopItems[idx];
+  if (!item) return;
+  if (p.gold < item.price) {
+    addLog(`Not enough gold! Need ${item.price} 💰`, 'system');
+    return;
+  }
+  p.gold -= item.price;
+  addLog(`Purchased: ${item.emoji} ${item.name} for ${item.price} gold`, 'gold');
+  applyItem(item, 'shop');
+  renderShop(); // refresh prices
+}
+
+function closeOverlay() {
+  game.state = 'dungeon';
+  showScreen('dungeon');
+  updateHUD();
+  render();
+}
+
+// ============================================================
+//  LEVEL UP
+// ============================================================
+function checkLevelUp() {
+  const p = game.player;
+  while (p.xp >= p.xpNext) {
+    p.xp -= p.xpNext;
+    p.level++;
+    p.xpNext = Math.round(p.xpNext * 1.5);
+    // Stat gains
+    const hpGain = rng(6, 12);
+    const atkGain = rng(1, 3);
+    const defGain = rng(0, 2);
+    p.maxHp += hpGain;
+    p.hp = Math.min(p.maxHp, p.hp + hpGain);
+    p.atk += atkGain;
+    p.def += defGain;
+    addLog(`🌟 LEVEL UP! Now level ${p.level}! HP+${hpGain} ATK+${atkGain} DEF+${defGain}`, 'boss');
+  }
+  updateHUD();
+  updateSidePanel();
+}
+
+// ============================================================
+//  HUD & UI UPDATES
+// ============================================================
+function updateHUD() {
+  const p = game.player;
+  const hpPct = (p.hp / p.maxHp) * 100;
+  const xpPct = (p.xp / p.xpNext) * 100;
+  document.getElementById('hud-hp').textContent = `${p.hp}/${p.maxHp}`;
+  document.getElementById('hud-hp-bar').style.width = hpPct + '%';
+  document.getElementById('hud-hp-bar').style.background =
+    hpPct > 50 ? 'linear-gradient(to right, #880000, #dd2222)' :
+    hpPct > 25 ? 'linear-gradient(to right, #884400, #dd8822)' :
+                 'linear-gradient(to right, #550000, #ff0000)';
+  document.getElementById('hud-level').textContent = p.level;
+  document.getElementById('hud-xp-bar').style.width = xpPct + '%';
+  document.getElementById('hud-atk').textContent = p.atk;
+  document.getElementById('hud-def').textContent = p.def;
+  document.getElementById('hud-gold').textContent = p.gold;
+}
+
+function updateSidePanel() {
+  const p = game.player;
+  document.getElementById('sp-name').textContent = (CLASSES[game.classId] || CLASSES.warrior).name;
+  document.getElementById('sp-level').textContent = p.level;
+  document.getElementById('sp-hp').textContent = `${p.hp}/${p.maxHp}`;
+  document.getElementById('sp-atk').textContent = p.atk;
+  document.getElementById('sp-def').textContent = p.def;
+  document.getElementById('sp-gold').textContent = p.gold;
+  document.getElementById('sp-weapon').textContent = p.weapon ? p.weapon.name : 'Fists';
+  document.getElementById('sp-armor').textContent = p.armor ? p.armor.name : 'Rags';
+  document.getElementById('sp-floor').textContent = game.floor;
+  document.getElementById('sp-enemies').textContent = game.enemies.filter(e=>e.alive).length;
+}
+
+// ============================================================
+//  LOGGING
+// ============================================================
+function addLog(msg, type='') {
+  const logArea = document.getElementById('log-area');
+  if (!logArea) return;
+  const entry = document.createElement('div');
+  entry.className = `log-entry ${type}`;
+  entry.textContent = `> ${msg}`;
+  logArea.appendChild(entry);
+  // Keep last 40 entries
+  while (logArea.children.length > 40) logArea.removeChild(logArea.firstChild);
+  logArea.scrollTop = logArea.scrollHeight;
+}
+
+// ============================================================
+//  SCREEN MANAGEMENT
+// ============================================================
+function showScreen(name) {
+  document.getElementById('title-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'none';
+  document.getElementById('combat-screen').style.display = 'none';
+  document.getElementById('overlay-screen').style.display = 'none';
+  document.getElementById('gameover-screen').style.display = 'none';
+
+  if (name === 'dungeon') {
+    document.getElementById('game-screen').style.display = 'block';
+  } else if (name === 'combat') {
+    document.getElementById('game-screen').style.display = 'block';
+    document.getElementById('combat-screen').style.display = 'block';
+    document.getElementById('dungeon-area').style.display = 'none';
+    document.getElementById('floor-indicator').style.display = 'none';
+    document.getElementById('log-area').style.display = 'none';
+    document.getElementById('controls-hint').style.display = 'none';
+  } else if (name === 'overlay') {
+    document.getElementById('game-screen').style.display = 'block';
+    document.getElementById('dungeon-area').style.display = 'none';
+    document.getElementById('floor-indicator').style.display = 'none';
+    document.getElementById('log-area').style.display = 'none';
+    document.getElementById('controls-hint').style.display = 'none';
+    document.getElementById('overlay-screen').style.display = 'block';
+  } else if (name === 'gameover') {
+    document.getElementById('gameover-screen').style.display = 'block';
+  }
+
+  // Reset dungeon area visibility when showing dungeon
+  if (name === 'dungeon') {
+    document.getElementById('dungeon-area').style.display = 'flex';
+    document.getElementById('floor-indicator').style.display = 'block';
+    document.getElementById('log-area').style.display = 'block';
+    document.getElementById('controls-hint').style.display = 'block';
+  }
+}
+
+// ============================================================
+//  GAME START / END
+// ============================================================
+function showCharSelect() {
+  document.getElementById('title-main').style.display = 'none';
+  document.getElementById('char-select').style.display = 'block';
+}
+
+function backToTitle() {
+  document.getElementById('char-select').style.display = 'none';
+  document.getElementById('title-main').style.display = 'block';
+}
+
+function selectClass(classId) {
+  document.getElementById('title-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'block';
+  initGame(classId);
+  showScreen('dungeon');
+  document.getElementById('floor-indicator').textContent = 'FLOOR 1 — THE ENTRANCE';
+}
+
+function gameDead() {
+  game.state = 'gameover';
+  showScreen('gameover');
+  const screen = document.getElementById('gameover-screen');
+  screen.className = 'dead';
+  document.getElementById('gameover-title').textContent = '💀 YOU DIED';
+  document.getElementById('gameover-msg').textContent = 'The dungeon claims another soul...';
+  const cls = CLASSES[game.classId] || CLASSES.warrior;
+  document.getElementById('gameover-stats').innerHTML =
+    `${cls.name} &nbsp;|&nbsp; Floor ${game.floor} &nbsp;|&nbsp; Level ${game.player.level} &nbsp;|&nbsp; ${game.player.kills} kills &nbsp;|&nbsp; 💰 ${game.player.gold}`;
+}
+
+function gameWin() {
+  game.state = 'gameover';
+  showScreen('gameover');
+  const screen = document.getElementById('gameover-screen');
+  screen.className = 'win';
+  document.getElementById('gameover-title').textContent = '🏆 VICTORY!';
+  document.getElementById('gameover-msg').textContent = 'The Ancient Dragon falls! You are the champion of the dungeon!';
+  const cls2 = CLASSES[game.classId] || CLASSES.warrior;
+  document.getElementById('gameover-stats').innerHTML =
+    `${cls2.name} &nbsp;|&nbsp; Floor ${game.floor} cleared &nbsp;|&nbsp; Level ${game.player.level} &nbsp;|&nbsp; ${game.player.kills} kills &nbsp;|&nbsp; 💰 ${game.player.gold}`;
+}
+
+// ============================================================
+//  UTILITIES
+// ============================================================
+function rng(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+// ============================================================
+//  INIT
+// ============================================================
+window.onload = () => {
+  document.getElementById('title-screen').style.display = 'block';
+};
+</script>
+</body>
+</html>
